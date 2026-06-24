@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+data/
+outputs/figures/*
+outputs/tables/*
+!outputs/figures/.gitkeep
+!outputs/tables/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+!data/processed/publications_sample.csv
