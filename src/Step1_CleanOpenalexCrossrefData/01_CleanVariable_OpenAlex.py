@@ -20,7 +20,10 @@ OPENALEX_IDS_TO_DROP = {
     "https://openalex.org/W115369480",
     "https://openalex.org/W309465800",
     "https://openalex.org/W4249665525",
-    "https://openalex.org/W4245342635"
+    "https://openalex.org/W4245342635",
+    "https://openalex.org/W4246125188",
+    "https://openalex.org/W4253097040",
+    "https://openalex.org/W4239194262"
 }
 OPENALEX_UNION_COLUMNS_FOR_DUPLICATES = [
     "openalex_primary_domain",
@@ -80,6 +83,8 @@ def main() -> None:
     print(f"Rows with abstract: {count_nonblank(openalex_selected, 'openalex_abstract')}.")
     print(f"Rows with JEL codes in abstract: {count_nonblank(openalex_selected, 'openalex_jel_codes')}.")
     print(f"Rows with duplicated DOI: {count_duplicate_rows(openalex_selected, 'openalex_doi_1')}.")
+    print(f"Rows with duplicated DOI: {count_duplicate_rows(openalex_selected, 'openalex_doi_2')}.")
+    print(f"Rows with duplicated DOI: {count_duplicate_rows(openalex_selected, 'openalex_doi_3')}.")
     print(f"Rows with duplicated title: {count_duplicate_rows(openalex_selected, 'openalex_title')}.")
 
 
@@ -94,6 +99,7 @@ def clean_openalex_data(openalex: pd.DataFrame) -> pd.DataFrame:
     openalex_selected = openalex_selected.drop(columns=["display_name"])
     openalex_selected = drop_correction_titles(openalex_selected)
     openalex_selected["title"] = openalex_selected["title"].apply(clean_title)
+    openalex_selected = rename_specific_openalex_titles(openalex_selected)
     openalex_selected = drop_blank_cleaned_titles(openalex_selected)
 
     openalex_selected["tag"] = duplicate_title_tag(openalex_selected, "title")
@@ -146,6 +152,18 @@ def clean_openalex_data(openalex: pd.DataFrame) -> pd.DataFrame:
     openalex_selected = drop_columns(openalex_selected, OPENALEX_COLUMNS_TO_DROP_AFTER_CLEANING)
 
     return openalex_selected
+
+
+def rename_specific_openalex_titles(data: pd.DataFrame) -> pd.DataFrame:
+    cleaned = data.copy()
+    if "title" not in cleaned.columns or "publication_year" not in cleaned.columns:
+        return cleaned
+
+    title = cleaned["title"].fillna("").astype(str).str.strip()
+    publication_year = cleaned["publication_year"].fillna("").astype(str).str.strip()
+    target_row = (title == "Human Capital and Growth") & (publication_year == "2015")
+    cleaned.loc[target_row, "title"] = "Human Capital and Growth 2015"
+    return cleaned
 
 
 
@@ -570,7 +588,19 @@ def drop_correction_titles(data: pd.DataFrame) -> pd.DataFrame:
         "JPE Turnaround Times",
         "JPE Turnaround Times, Previous Two Years",
         "Referee List",
-        "Title Page"
+        "Title Page",
+        "Editors Introduction",
+        "Editor s Introduction",
+        "Editor s Note",
+        "Report by the AEA Data Editor",
+        "AEA Data and Code Availability Policy",
+        "Note from the AEA Secretary Treasurer about the Proceedings Supplement",
+        "INDEPENDENT AUDITOR S REPORT",
+        "Independent Auditor s Report",
+        "Behavior of the Firm Under Regulatory Constraint",
+        "Auditors Report Audited Financial Statements",
+        "INDEPENDENT AUDITOR S REPORT",
+        "John Bates Clark Medalist"
     ]
 
     pattern = "|".join(re.escape(phrase) for phrase in correction_patterns)

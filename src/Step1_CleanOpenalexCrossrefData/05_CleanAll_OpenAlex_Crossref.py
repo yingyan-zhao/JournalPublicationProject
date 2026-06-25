@@ -15,65 +15,98 @@ OUTPUT_CSV = Path("data/processed/OpenAlex_Crossref_All_Webscraped_Cleaned.csv")
 DROP_COLUMNS = [
     "record_status",
     "match_strategy",
+    "doi",
     "openalex_id",
+    "openalex_doi_1",
+    "openalex_doi_2",
+    "openalex_doi_3",
     "openalex_type",
     "openalex_type_crossref",
     "openalex_orcid_ids",
     "openalex_author_positions",
     "openalex_cited_by_count",
     "openalex_collection_date",
+    "openalex_primary_domain",
+    "openalex_primary_field",
+    "openalex_primary_subfield",
+    "openalex_top3_keywords",
+    "openalex_top3_concepts",
+    "openalex_level0_concepts",
+    "crossref_published",
+    "crossref_published-print",
+    "crossref_published-online",
+    "crossref_reference-count",
+    "crossref_references-count",
+    "crossref_is-referenced-by-count",
+    "crossref_issued",
+    "crossref_container-title",
+    "crossref_short-container-title",
+    "crossref_publisher",
     "crossref_volume",
     "crossref_issue",
     "crossref_page",
     "crossref_type",
-    "crossref_reference-count",
-    "crossref_references-count",
-    "crossref_is-referenced-by-count",
     "crossref_URL",
+    "crossref_ISSN",
     "crossref_author_sequence",
     "crossref_author_orcids",
-    "crossref_ISSN",
     "crossref_collection_date",
-    "scrape_url	scrape_final_url",
+    "crossref_doi_1",
+    "crossref_doi_2",
+    "crossref_doi_3",
+    "scrape_doi",
+    "scrape_doi_source",
+    "scrape_url",
+    "scrape_final_url",
     "scrape_http_status",
     "scrape_jel_source",
     "scrape_scraped_at",
     "scrape_error",
-    "scrape_url",
-    "scrape_final_url",
-    "crossref_published",
-    "crossref_published-print",
-    "crossref_published-online",
-    "crossref_issued",
-    "crossref_container-title",
-    "crossref_short-container-title",
-    "crossref_publisher"
+    "scrape_jel_source",
+    "scrape_jel_context",
+    "scrape_scraped_at",
+    "scrape_error"
 ]
 
-COALESCED_SOURCE_COLUMNS = [
-    "openalex_doi",
-    "crossref_doi",
-    "scrape_doi",
-    "openalex_journalname",
-    "crossref_journalname",
-    "scrape_journalname",
-    "openalex_journalissn",
-    "crossref_journalissn",
-    "openalex_publication_year",
-    "crossref_published_year",
-    "scrape_title",
-    "openalex_title",
-    "crossref_title",
-    "scrape_abstract",
-    "openalex_abstract",
-    "crossref_abstract",
-    "scrape_jel_codes",
-    "openalex_jel_codes",
-    "crossref_jel_codes",
-    "scrape_jel_context"
-]
+
 
 NONPAPER_TITLE_PATTERNS = [
+    "Correction:",
+    "A Correction",
+    "Correction to",
+    "Erratum",
+    "Corrigendum",
+    "comment",
+    "report of",
+    "Editors' Introduction",
+    "Editor's Introduction",
+    "Foreword",
+    "reply",
+    "Editorial Announcement",
+    "Ad Hoc Search Committee",
+    "Executive Committee",
+    "List of Online Reports",
+    "Book Review",
+    "Frontmatter of Econometrica",
+    "Backmatter of Econometrica ",
+    "Ad Hoc Committee",
+    "Journal of Economic Perspectives",
+    "American Economic Journal",
+    "Journal of Economic Literature",
+    "Committee on",
+    "Index to Volume",
+    "Recent Referees",
+    "Minutes of the Annual Meeting",
+    "Journal of Political Economy",
+    "John Bates Clark Award",
+    "Appendix",
+    "American Economic Association",
+    "American Economic Review",
+    "Job Openings for Economists",
+    "OUP accepted manuscript",
+    "Minutes of the Annual Business Meeting",
+    "Front Matter",
+    "The Econometric Society Annual Reports Econometrica",
     "Correction:",
     "A Correction",
     "Correction to",
@@ -128,7 +161,66 @@ NONPAPER_TITLE_PATTERNS = [
     "Subscription Page",
     "Table of Content",
     "The Econometric Society Annual Reports",
-    "The Quarterly Journal of Economics"
+    "The Quarterly Journal of Economics",
+    "An Astonishing Sixty Years The Legacy of Hiroshima",
+    "the Diamond Water Paradox",
+    "General Information on the Association",
+    "Information on the Association",
+    "Private and Social Rates of Return to Education of Academicians Note",
+    "Protectionism through Prostitution",
+    "Voltaire on Labor Markets and Monetary Policy",
+    "Private and Social Rates of Return to Education of Academicians Note",
+    "Fellows of the Econometric Society",
+    "Galileo on the Diamond/Water Paradox",
+    "Independent Auditor's Report",
+    "JPE Submissions",
+    "JPE Turnaround Times",
+    "JPE Turnaround Times, Previous Two Years",
+    "Referee List",
+    "Title Page",
+    "Editors Introduction",
+    "Editor s Introduction",
+    "Editor s Note",
+    "Report by the AEA Data Editor",
+    "AEA Data and Code Availability Policy",
+    "Note from the AEA Secretary Treasurer about the Proceedings Supplement",
+    "INDEPENDENT AUDITOR S REPORT",
+    "Independent Auditor s Report",
+    "Behavior of the Firm Under Regulatory Constraint",
+    "Auditors Report Audited Financial Statements",
+    "John Bates Clark Medalist",
+]
+
+
+
+COALESCED_SOURCE_COLUMNS = [
+    "openalex_journalname",
+    "crossref_journalname",
+    "scrape_journalname",
+    "openalex_journalissn",
+    "crossref_journalissn",
+    "openalex_publication_year",
+    "crossref_published_year",
+    "scrape_title",
+    "openalex_title",
+    "crossref_title",
+    "scrape_abstract",
+    "openalex_abstract",
+    "crossref_abstract",
+    "scrape_jel_codes",
+    "openalex_jel_codes",
+    "crossref_jel_codes",
+]
+
+DOI_LIST_COLUMNS = [
+    "doi",
+    "openalex_doi_1",
+    "openalex_doi_2",
+    "openalex_doi_3",
+    "crossref_doi_1",
+    "crossref_doi_2",
+    "crossref_doi_3",
+    "scrape_doi",
 ]
 
 
@@ -140,25 +232,32 @@ def main() -> None:
     cleaned = clean_all_data(data)
 
     OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    cleaned.to_csv(OUTPUT_CSV, index=False)
 
     print("Clean all OpenAlex/Crossref/Webscrape summary:")
     print(f"  Input rows: {len(data)}")
     print(f"  Output rows: {len(cleaned)}")
-    print(f"  Rows with DOI: {count_nonblank(cleaned, 'doi')}")
+    print(f"  Rows with DOI list: {count_nonblank(cleaned, 'doi_list')}")
+    print(f"  DOI version columns: {count_doi_version_columns(cleaned)}")
     print(f"  Rows with abstract: {count_nonblank(cleaned, 'abstract')}")
     print(f"  Rows with JEL codes: {count_nonblank(cleaned, 'jel_codes')}")
+    print(
+        "  Rows with duplicated title: "
+        f"{count_duplicate_rows(cleaned, 'title', normalize_title)}"
+    )
+    print(
+        "  Rows with duplicated doi_list: "
+        f"{count_duplicate_rows(cleaned, 'doi_list', normalize_doi_list)}"
+    )
+
+    cleaned.to_csv(OUTPUT_CSV, index=False)
     print(f"  Output CSV: {OUTPUT_CSV}")
 
 
 def clean_all_data(data: pd.DataFrame) -> pd.DataFrame:
     cleaned = data.copy()
 
-    cleaned["doi"] = coalesce_columns(
-        data,
-        ["doi", "scrape_doi", "openalex_doi", "crossref_doi"],
-        clean_doi,
-    )
+    cleaned["doi_list"] = data.apply(doi_list_from_row, axis=1)
+    cleaned = add_doi_version_columns(cleaned)
     cleaned["journalname"] = coalesce_columns(
         data,
         ["journalname", "scrape_journalname", "openalex_journalname", "crossref_journalname"],
@@ -179,6 +278,7 @@ def clean_all_data(data: pd.DataFrame) -> pd.DataFrame:
         ["title", "scrape_title", "openalex_title", "crossref_title"],
         clean_text,
     )
+    cleaned["title"] = cleaned["title"].apply(clean_title)
     cleaned["abstract"] = coalesce_columns(
         data,
         ["scrape_abstract", "openalex_abstract", "crossref_abstract"],
@@ -195,11 +295,40 @@ def clean_all_data(data: pd.DataFrame) -> pd.DataFrame:
     cleaned = cleaned.drop(columns=[column for column in columns_to_drop if column in cleaned.columns])
 
     before_nonpapers = len(cleaned)
-    cleaned = cleaned.loc[~cleaned["title"].apply(is_nonpaper_title)].copy()
+    cleaned = drop_correction_titles(cleaned)
     dropped_nonpapers = before_nonpapers - len(cleaned)
-    #
     print(f"  Dropped non-paper title rows: {dropped_nonpapers}")
     return cleaned
+
+
+def doi_list_from_row(row: pd.Series) -> str:
+    dois = []
+    seen = set()
+    for column in DOI_LIST_COLUMNS:
+        doi = clean_doi(row.get(column, ""))
+        if doi == "" or doi in seen:
+            continue
+        dois.append(doi)
+        seen.add(doi)
+    return "; ".join(dois)
+
+
+def add_doi_version_columns(data: pd.DataFrame) -> pd.DataFrame:
+    data = data.copy()
+    doi_versions = data["doi_list"].apply(split_doi_list)
+    max_versions = int(doi_versions.apply(len).max()) if len(doi_versions) else 0
+
+    for version_number in range(1, max_versions + 1):
+        column = f"doi_{version_number}"
+        data[column] = doi_versions.apply(
+            lambda dois: dois[version_number - 1] if len(dois) >= version_number else ""
+        )
+
+    return data
+
+
+def split_doi_list(value: Any) -> list[str]:
+    return [clean_doi(doi) for doi in str(value or "").split(";") if clean_doi(doi)]
 
 
 def coalesce_columns(data: pd.DataFrame, columns: list[str], cleaner) -> pd.Series:
@@ -341,11 +470,23 @@ def is_nonpaper_title(title: str) -> bool:
     return any(pattern.casefold() in normalized for pattern in NONPAPER_TITLE_PATTERNS)
 
 
+def drop_correction_titles(data: pd.DataFrame) -> pd.DataFrame:
+    if "title" not in data.columns:
+        return data.copy()
+    correction_title = data["title"].fillna("").astype(str).apply(is_nonpaper_title)
+    return data.loc[~correction_title].copy()
+
+
 def normalize_title(value: Any) -> str:
     title = clean_text(value).lower()
     title = title.replace("&amp;", "and").replace("&", "and")
     title = "".join(character if character.isalnum() else " " for character in title)
     return " ".join(title.split())
+
+
+def normalize_doi_list(value: Any) -> str:
+    dois = split_doi_list(value)
+    return "; ".join(dois)
 
 
 def clean_text(value: Any) -> str:
@@ -369,6 +510,18 @@ def count_nonblank(data: pd.DataFrame, column: str) -> int:
     if column not in data.columns:
         return 0
     return int(data[column].fillna("").astype(str).str.strip().ne("").sum())
+
+
+def count_doi_version_columns(data: pd.DataFrame) -> int:
+    return sum(1 for column in data.columns if re.fullmatch(r"doi_\d+", column))
+
+
+def count_duplicate_rows(data: pd.DataFrame, column: str, cleaner) -> int:
+    if column not in data.columns:
+        return 0
+    values = data[column].apply(cleaner)
+    values = values.loc[values != ""]
+    return int(values.duplicated(keep=False).sum())
 
 
 if __name__ == "__main__":

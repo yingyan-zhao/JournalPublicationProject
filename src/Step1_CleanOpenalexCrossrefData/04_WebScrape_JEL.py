@@ -51,6 +51,7 @@ OUTPUT_COLUMNS_BASE = [
     "http_status",
     "authors",
     "author_institutions",
+    "publication_year",
     "abstract",
     "keywords",
     "jel_codes",
@@ -113,6 +114,11 @@ def main() -> None:
 
         time.sleep(args.sleep)
 
+    before_year_filter = len(data)
+    data = drop_pre_2000_scraped_publication_year(data)
+    dropped_pre_2000 = before_year_filter - len(data)
+    print(f"Dropped rows with scrape_publication_year before 2000: {dropped_pre_2000}.")
+
     data.to_csv(args.output_csv, index=False)
     print(f"Wrote updated full dataset to {args.output_csv}.")
 
@@ -174,6 +180,8 @@ def rows_needing_scrape(data: pd.DataFrame, overwrite: bool) -> list[int]:
     rows = []
     for row_index, row in data.iterrows():
         record = scrape_record_from_row(row)
+        if record["journalname"] != "American Economic Review":
+            continue
         if not record["doi_candidates"]:
             continue
         if not overwrite and row_has_scraped_information(row):
@@ -232,6 +240,7 @@ def scrape_one_record(record: dict[str, str], timeout: float, user_agent: str) -
         "http_status": "",
         "authors": "",
         "author_institutions": "",
+        "publication_year": "",
         "abstract": "",
         "keywords": "",
         "jel_codes": "",
@@ -268,6 +277,7 @@ def scrape_one_record(record: dict[str, str], timeout: float, user_agent: str) -
                 result["title"] = metadata["title"]
                 result["authors"] = metadata["authors"]
                 result["author_institutions"] = metadata["author_institutions"]
+                result["publication_year"] = metadata["publication_year"]
                 result["abstract"] = metadata["abstract"]
                 result["keywords"] = metadata["keywords"]
                 result["jel_codes"] = metadata["jel_codes"]
@@ -294,6 +304,7 @@ def row_has_scraped_information(row: pd.Series) -> bool:
     requested_columns = [
         "scrape_authors",
         "scrape_author_institutions",
+        "scrape_publication_year",
         "scrape_abstract",
         "scrape_keywords",
         "scrape_title",
@@ -306,6 +317,7 @@ def has_scraped_information(result: dict[str, str]) -> bool:
     requested_fields = [
         "authors",
         "author_institutions",
+        "publication_year",
         "abstract",
         "keywords",
         "title",
@@ -356,6 +368,7 @@ def extract_article_metadata(html: str) -> dict[str, str]:
     title = extract_title_from_html(soup)
     authors = extract_authors_from_html(soup)
     author_institutions = extract_author_institutions_from_html(soup)
+    publication_year = extract_publication_year_from_html(soup)
     abstract = extract_abstract_from_html(soup)
     keywords = extract_keywords_from_html(soup)
 
@@ -366,6 +379,7 @@ def extract_article_metadata(html: str) -> dict[str, str]:
             "title": title,
             "authors": authors,
             "author_institutions": author_institutions,
+            "publication_year": publication_year,
             "abstract": abstract,
             "keywords": keywords,
             "jel_codes": "; ".join(meta_codes),
@@ -380,6 +394,7 @@ def extract_article_metadata(html: str) -> dict[str, str]:
             "title": title,
             "authors": authors,
             "author_institutions": author_institutions,
+            "publication_year": publication_year,
             "abstract": abstract,
             "keywords": keywords,
             "jel_codes": "; ".join(text_codes),
@@ -391,6 +406,7 @@ def extract_article_metadata(html: str) -> dict[str, str]:
         "title": title,
         "authors": authors,
         "author_institutions": author_institutions,
+        "publication_year": publication_year,
         "abstract": abstract,
         "keywords": keywords,
         "jel_codes": "",
@@ -464,6 +480,46 @@ def extract_author_institutions_from_html(soup: BeautifulSoup) -> str:
         institutions.extend(tag.get_text(" ", strip=True) for tag in soup.select(selector))
 
     return "; ".join(unique_values(institutions))
+
+
+def extract_publication_year_from_html(soup: BeautifulSoup) -> str:
+    date_text = meta_content(
+        soup,
+        "citation_publication_date",
+        "citation_online_date",
+        "citation_date",
+        "citation_year",
+        "dc.Date",
+        "DC.Date",
+        "date",
+        "article:published_time",
+    )
+    year = year_from_text(date_text)
+    if year:
+        return year
+
+    time_tag = soup.find("time")
+    if time_tag is not None:
+        year = year_from_text(time_tag.get("datetime", "") or time_tag.get_text(" ", strip=True))
+        if year:
+            return year
+
+    selectors = [
+        ".pub-date",
+        ".publication-date",
+        ".article-date",
+        "[class*=pub-date]",
+        "[class*=publication-date]",
+    ]
+    for selector in selectors:
+        tag = soup.select_one(selector)
+        if tag is None:
+            continue
+        year = year_from_text(tag.get_text(" ", strip=True))
+        if year:
+            return year
+
+    return ""
 
 
 def extract_abstract_from_html(soup: BeautifulSoup) -> str:
@@ -625,6 +681,22 @@ def context_window(text: str, start: int, end: int, size: int = 160) -> str:
     left = max(0, start - size)
     right = min(len(text), end + size)
     return clean_text(text[left:right])
+
+
+def year_from_text(value: Any) -> str:
+    match = re.search(r"\b(19|20)\d{2}\b", clean_text(value))
+    if match:
+        return match.group(0)
+    return ""
+
+
+def drop_pre_2000_scraped_publication_year(data: pd.DataFrame) -> pd.DataFrame:
+    if "scrape_publication_year" not in data.columns:
+        return data.copy()
+
+    year = pd.to_numeric(data["scrape_publication_year"], errors="coerce")
+    keep_rows = year.isna() | (year >= 2000)
+    return data.loc[keep_rows].copy()
 
 
 def normalize_doi(value: str) -> str:

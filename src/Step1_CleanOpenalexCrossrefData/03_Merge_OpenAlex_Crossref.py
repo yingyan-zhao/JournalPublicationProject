@@ -60,12 +60,21 @@ def main() -> None:
 
     all_records, stage_summaries = merge_by_doi_versions(openalex, crossref)
     all_records = add_combined_columns(all_records)
+    all_records["_original_sort_order"] = range(len(all_records))
+    all_records["title_duplicate_tag"] = duplicate_nonblank_tag(
+        all_records,
+        "title",
+        normalize_title,
+    )
+    all_records = consolidate_duplicate_titles(all_records)
     all_records = order_output_columns(all_records, openalex.columns, crossref.columns)
     all_records = drop_temp_columns(all_records)
 
-    all_records.to_csv(OUTPUT_CSV_All, index=False)
-
     print_merge_summary(openalex, crossref, all_records, stage_summaries)
+
+    all_records.to_csv(OUTPUT_CSV_All, index=False)
+    print(f"\nWrote all matched and unmatched rows to {OUTPUT_CSV_All}")
+    print_final_duplicate_check(all_records)
 
 
 def check_required_columns(data: pd.DataFrame, columns: list[str], dataset_name: str) -> None:
@@ -349,6 +358,52 @@ def coalesce_columns(data: pd.DataFrame, columns: list[str], cleaner) -> pd.Seri
     return values
 
 
+def consolidate_duplicate_titles(data: pd.DataFrame) -> pd.DataFrame:
+    data = data.copy()
+    data["_normalized_output_title"] = data["title"].apply(normalize_title)
+    duplicated_title = data["_normalized_output_title"].ne("") & data[
+        "_normalized_output_title"
+    ].duplicated(keep=False)
+
+    duplicate_groups = data.loc[duplicated_title].groupby(
+        "_normalized_output_title",
+        sort=False,
+    )
+    consolidated_rows = [consolidate_duplicate_group(group) for _, group in duplicate_groups]
+    nonduplicated_rows = data.loc[~duplicated_title].copy()
+
+    if consolidated_rows:
+        consolidated = pd.DataFrame(consolidated_rows, columns=data.columns)
+        data = pd.concat([nonduplicated_rows, consolidated], ignore_index=True)
+    else:
+        data = nonduplicated_rows
+
+    data = data.sort_values("_original_sort_order", kind="mergesort")
+    return data.drop(columns=["_normalized_output_title", "_original_sort_order"])
+
+
+def consolidate_duplicate_group(group: pd.DataFrame) -> pd.Series:
+    row = group.iloc[0].copy()
+    row["_original_sort_order"] = group["_original_sort_order"].min()
+
+    for column in group.columns:
+        if column in {"_normalized_output_title", "_original_sort_order"}:
+            continue
+        if column == "title_duplicate_tag":
+            row[column] = 1
+        else:
+            row[column] = longest_text_value(group[column])
+
+    return row
+
+
+def longest_text_value(values: pd.Series) -> str:
+    text_values = values.apply(clean_text)
+    if text_values.empty:
+        return ""
+    return text_values.loc[text_values.str.len().idxmax()]
+
+
 def normalize_doi(value) -> str:
     text = clean_text(value).lower()
     for prefix in [
@@ -379,7 +434,14 @@ def order_output_columns(
     openalex_columns: pd.Index,
     crossref_columns: pd.Index,
 ) -> pd.DataFrame:
-    first_columns = ["record_status", "match_strategy", "doi", "journalname", "title"]
+    first_columns = [
+        "record_status",
+        "match_strategy",
+        "doi",
+        "journalname",
+        "title",
+        "title_duplicate_tag",
+    ]
     ordered_columns = []
     for column in first_columns + list(openalex_columns) + list(crossref_columns):
         if column in data.columns and column not in ordered_columns:
@@ -424,12 +486,35 @@ def count_nonblank(data: pd.DataFrame, column: str) -> int:
     return int(data[column].fillna("").astype(str).str.strip().ne("").sum())
 
 
-def duplicate_nonblank_rows(data: pd.DataFrame, column: str) -> int:
+def duplicate_nonblank_rows(data: pd.DataFrame, column: str, cleaner=normalize_doi) -> int:
     if column not in data.columns:
         return 0
-    values = data[column].apply(normalize_doi)
+    values = data[column].apply(cleaner)
     values = values.loc[values != ""]
     return int(values.duplicated(keep=False).sum())
+
+
+def duplicate_nonblank_groups(data: pd.DataFrame, column: str, cleaner=normalize_doi) -> int:
+    if column not in data.columns:
+        return 0
+    values = data[column].apply(cleaner)
+    values = values.loc[values != ""]
+    duplicated_values = values.loc[values.duplicated(keep=False)]
+    return int(duplicated_values.nunique())
+
+
+def duplicate_nonblank_tag(data: pd.DataFrame, column: str, cleaner=normalize_doi) -> pd.Series:
+    if column not in data.columns:
+        return pd.Series([0] * len(data), index=data.index)
+    values = data[column].apply(cleaner)
+    duplicated = values.ne("") & values.duplicated(keep=False)
+    return duplicated.astype(int)
+
+
+def count_tagged_rows(data: pd.DataFrame, column: str) -> int:
+    if column not in data.columns:
+        return 0
+    return int(pd.to_numeric(data[column], errors="coerce").fillna(0).sum())
 
 
 def print_merge_summary(
@@ -450,6 +535,17 @@ def print_merge_summary(
     print(f"  Crossref only rows: {int(status_counts.get('crossref_only', 0))}")
     print(f"  Rows with combined DOI: {count_nonblank(all_records, 'doi')}")
     print(f"  Rows with combined title: {count_nonblank(all_records, 'title')}")
+    print(f"  Rows consolidated from duplicated titles: {count_tagged_rows(all_records, 'title_duplicate_tag')}")
+    print(f"  Output duplicate DOI rows: {duplicate_nonblank_rows(all_records, 'doi')}")
+    print(f"  Output duplicate DOI groups: {duplicate_nonblank_groups(all_records, 'doi')}")
+    print(
+        "  Output duplicate title rows: "
+        f"{duplicate_nonblank_rows(all_records, 'title', normalize_title)}"
+    )
+    print(
+        "  Output duplicate title groups: "
+        f"{duplicate_nonblank_groups(all_records, 'title', normalize_title)}"
+    )
 
     print("\nInput duplicate DOI rows by version column:")
     for column in OPENALEX_DOI_COLUMNS:
@@ -469,7 +565,14 @@ def print_merge_summary(
         ].to_string(index=False)
     )
 
-    print(f"\nWrote all matched and unmatched rows to {OUTPUT_CSV_All}")
+
+def print_final_duplicate_check(all_records: pd.DataFrame) -> None:
+    print("\nFinal duplicate check:")
+    print(f"  Rows with duplicated DOI: {duplicate_nonblank_rows(all_records, 'doi')}")
+    print(
+        "  Rows with duplicated title: "
+        f"{duplicate_nonblank_rows(all_records, 'title', normalize_title)}"
+    )
 
 
 if __name__ == "__main__":

@@ -16,6 +16,11 @@ CROSSREF_COLUMNS_TO_DROP_AFTER_CLEANING = [
     "crossref_doi",
     "crossref_tag",
 ]
+CROSSREF_DOIS_TO_DROP = {
+    "10.1257/aer.97.3.1033",
+    "10.1257/aer.15000025",
+    "10.1257/aer.108.6.1598",
+}
 CROSSREF_EXACT_TITLES_TO_DROP = {
     "Index",
     "Announcement",
@@ -75,6 +80,8 @@ def main() -> None:
     print(f"Rows with abstract: {count_nonblank(crossref_selected, 'crossref_abstract')}.")
     print(f"Rows with JEL codes in abstract: {count_nonblank(crossref_selected, 'crossref_jel_codes')}.")
     print(f"Rows with duplicated DOI: {count_duplicate_rows(crossref_selected, 'crossref_doi_1')}.")
+    print(f"Rows with duplicated DOI: {count_duplicate_rows(crossref_selected, 'crossref_doi_2')}.")
+    print(f"Rows with duplicated DOI: {count_duplicate_rows(crossref_selected, 'crossref_doi_3')}.")
     print(f"Rows with duplicated title: {count_duplicate_rows(crossref_selected, 'crossref_title')}.")
 
 
@@ -84,6 +91,7 @@ def clean_crossref_data(crossref: pd.DataFrame) -> pd.DataFrame:
     # clean paper fields
     crossref_selected["doi"] = crossref_selected["DOI"].apply(clean_doi)
     crossref_selected = crossref_selected.drop(columns=["DOI"])
+    crossref_selected = drop_dois(crossref_selected, CROSSREF_DOIS_TO_DROP)
 
     # clean the title
     crossref_selected["title"] = crossref_selected["title"].apply(first_json_value)
@@ -92,6 +100,7 @@ def clean_crossref_data(crossref: pd.DataFrame) -> pd.DataFrame:
     crossref_selected = drop_correction_titles(crossref_selected)
     crossref_selected = drop_exact_titles(crossref_selected, CROSSREF_EXACT_TITLES_TO_DROP)
     crossref_selected["title"] = crossref_selected["title"].apply(clean_title)
+    crossref_selected = rename_specific_crossref_titles(crossref_selected)
     crossref_selected = drop_blank_titles(crossref_selected)
 
     crossref_selected["tag"] = duplicate_title_tag(crossref_selected, "title")
@@ -117,6 +126,18 @@ def clean_crossref_data(crossref: pd.DataFrame) -> pd.DataFrame:
     crossref_selected = drop_columns(crossref_selected, CROSSREF_COLUMNS_TO_DROP_AFTER_CLEANING)
 
     return crossref_selected
+
+
+def rename_specific_crossref_titles(data: pd.DataFrame) -> pd.DataFrame:
+    cleaned = data.copy()
+    if "title" not in cleaned.columns or "published_year" not in cleaned.columns:
+        return cleaned
+
+    title = cleaned["title"].fillna("").astype(str).str.strip()
+    publication_year = cleaned["published_year"].fillna("").astype(str).str.strip()
+    target_row = (title == "Human Capital and Growth") & (publication_year == "2015")
+    cleaned.loc[target_row, "title"] = "Human Capital and Growth 2015"
+    return cleaned
 
 
 def keep_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -148,6 +169,11 @@ def duplicate_title_tag(data: pd.DataFrame, title_column: str) -> pd.Series:
 def drop_exact_titles(data: pd.DataFrame, titles_to_drop: set[str]) -> pd.DataFrame:
     titles = data["title"].fillna("").astype(str).str.strip()
     return data.loc[~titles.isin(titles_to_drop)].copy()
+
+
+def drop_dois(data: pd.DataFrame, dois_to_drop: set[str]) -> pd.DataFrame:
+    doi_values = data["doi"].apply(clean_doi).str.lower()
+    return data.loc[~doi_values.isin(dois_to_drop)].copy()
 
 
 def drop_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -542,7 +568,19 @@ def drop_correction_titles(data: pd.DataFrame) -> pd.DataFrame:
         "JPE Turnaround Times",
         "JPE Turnaround Times, Previous Two Years",
         "Referee List",
-        "Title Page"
+        "Title Page",
+        "Editors Introduction",
+        "Editor s Introduction",
+        "Editor s Note",
+        "Report by the AEA Data Editor",
+        "AEA Data and Code Availability Policy",
+        "Note from the AEA Secretary Treasurer about the Proceedings Supplement",
+        "INDEPENDENT AUDITOR S REPORT",
+        "Independent Auditor s Report",
+        "Behavior of the Firm Under Regulatory Constraint",
+        "Auditors Report Audited Financial Statements",
+        "INDEPENDENT AUDITOR S REPORT",
+        "John Bates Clark Medalist"
     ]
 
     pattern = "|".join(re.escape(phrase) for phrase in correction_patterns)
