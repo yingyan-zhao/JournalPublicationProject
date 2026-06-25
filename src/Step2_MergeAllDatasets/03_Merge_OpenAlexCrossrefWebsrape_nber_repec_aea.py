@@ -76,6 +76,7 @@ def main() -> None:
     print(f"  Matched by normalized title: {merge_summary['matched_by_title']}")
     print(f"  Base-only rows: {merge_summary['base_only']}")
     print(f"  AEA-only rows: {merge_summary['aea_only']}")
+    print(f"  Dropped base-only rows with blank doi_list: {merge_summary['dropped_base_only_blank_doi_list']}")
 
 
 def read_aea_data(path: Path) -> pd.DataFrame:
@@ -148,6 +149,7 @@ def merge_base_with_aea(
         "matched_by_title": 0,
         "base_only": 0,
         "aea_only": 0,
+        "dropped_base_only_blank_doi_list": 0,
     }
 
     matched_frames = []
@@ -196,6 +198,11 @@ def merge_base_with_aea(
     merged = pd.concat(matched_frames, ignore_index=True, sort=False)
     merged = sort_outer_merged_rows(merged)
     merged = drop_merge_helper_columns(merged)
+    merged, dropped_rows = drop_base_only_blank_doi_list(merged)
+    summary["dropped_base_only_blank_doi_list"] = dropped_rows
+    merged["abstract"] = prefer_nonblank_source_column(merged, "abstract", "aea_abstract")
+    merged["jel_codes"] = prefer_nonblank_source_column(merged, "jel_codes", "aea_jel_codes")
+    merged["doi_full"] = merged.apply(doi_full_from_row, axis=1)
     merged["duplicate_doi_tag"] = duplicate_doi_tag(merged)
     merged["duplicate_title_tag"] = duplicate_exported_title_tag(merged)
     return merged.reset_index(drop=True), summary
@@ -283,6 +290,13 @@ def drop_merge_helper_columns(data: pd.DataFrame) -> pd.DataFrame:
     return data.drop(columns=[column for column in helper_columns if column in data.columns])
 
 
+def drop_base_only_blank_doi_list(data: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    doi_list = get_column(data, "doi_list").fillna("").astype(str).str.strip()
+    match_strategy = get_column(data, "aea_match_strategy").fillna("").astype(str).str.strip()
+    drop_rows = (doi_list == "") & (match_strategy == "base_only")
+    return data.loc[~drop_rows].copy(), int(drop_rows.sum())
+
+
 def fill_blank_from_column(
     data: pd.DataFrame,
     target_column: str,
@@ -296,6 +310,17 @@ def fill_blank_from_column(
 
 
 def prefer_source_column(
+    data: pd.DataFrame,
+    target_column: str,
+    source_column: str,
+) -> pd.Series:
+    target = get_column(data, target_column).fillna("").astype(str)
+    source = get_column(data, source_column).fillna("").astype(str)
+    source_nonblank = source.str.strip() != ""
+    return target.mask(source_nonblank, source)
+
+
+def prefer_nonblank_source_column(
     data: pd.DataFrame,
     target_column: str,
     source_column: str,
@@ -437,6 +462,20 @@ def doi_values_from_row(row: pd.Series) -> list[str]:
                 dois.append(doi)
                 seen.add(doi)
     return dois
+
+
+def doi_full_from_row(row: pd.Series) -> str:
+    dois = []
+    seen = set()
+    for column in ["doi_1", "doi_2", "doi_3", "doi_list", "aea_doi"]:
+        value = row.get(column, "")
+        candidates = str(value or "").split(";") if column == "doi_list" else [value]
+        for candidate in candidates:
+            doi = normalize_doi(candidate)
+            if doi and doi not in seen:
+                dois.append(doi)
+                seen.add(doi)
+    return "; ".join(dois)
 
 
 def duplicate_key_rows(data: pd.DataFrame, key_column: str) -> int:
