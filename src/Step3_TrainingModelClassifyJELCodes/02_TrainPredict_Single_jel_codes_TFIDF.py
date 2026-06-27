@@ -15,17 +15,17 @@ from sklearn.pipeline import Pipeline
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_TFIDF_Validation_Predictions.csv")
-CONFUSION_MATRIX_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_TFIDF_Confusion_Matrix.csv")
-TUNING_RESULTS_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_TFIDF_Tuning_Results.csv")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_TFIDF_Validation_Predictions.csv")
+CONFUSION_MATRIX_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_TFIDF_Confusion_Matrix.csv")
+TUNING_RESULTS_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_TFIDF_Tuning_Results.csv")
 
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_1_Model_Report.txt")
-MODEL_OUTPUT = Path("data/processed/JEL_Codes_1_TFIDF_LogisticRegression.joblib")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_1_TFIDF_Model_Report.txt")
+MODEL_OUTPUT = Path("data/trainingmodel/JEL_Codes_1_TFIDF_LogisticRegression.joblib")
 
 TEXT_COLUMNS = ["title", "keywords", "abstract"]
 
@@ -38,10 +38,10 @@ CV_FOLDS = 5
 GRID_SEARCH_N_JOBS = -1
 
 TFIDF_PARAM_GRID = {
-    "tfidf__ngram_range": [(1, 1), (1, 2), (1, 3)],
-    "tfidf__min_df": [2, 3, 4],
-    "tfidf__max_df": [0.85, 0.9, 0.95],
-    "tfidf__max_features": [30000, 50000, 100000],
+    "tfidf__ngram_range": [ (1, 3), (1, 4), (1, 5)],
+    "tfidf__min_df": [ 6, 7, 8],
+    "tfidf__max_df": [0.9, 0.95],
+    "tfidf__max_features": [30000],
 }
 
 

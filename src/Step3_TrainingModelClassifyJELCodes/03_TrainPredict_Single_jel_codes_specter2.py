@@ -14,19 +14,19 @@ from sklearn.preprocessing import StandardScaler
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_SPECTER2.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted_SPECTER2.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_SPECTER2_Validation_Predictions.csv")
-CONFUSION_MATRIX_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_SPECTER2_Confusion_Matrix.csv")
-TUNING_RESULTS_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_SPECTER2_Tuning_Results.csv")
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_1_SPECTER2_LogisticRegression_Report.txt")
-MODEL_OUTPUT = Path("data/processed/JEL_Codes_1_SPECTER2_LogisticRegression.joblib")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_SPECTER2.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted_SPECTER2.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_Validation_Predictions.csv")
+CONFUSION_MATRIX_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_Confusion_Matrix.csv")
+TUNING_RESULTS_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_Tuning_Results.csv")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_LogisticRegression_Report.txt")
+MODEL_OUTPUT = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_LogisticRegression.joblib")
 
-TRAINING_EMBEDDINGS_OUTPUT = Path("data/processed/JEL_Codes_1_SPECTER2_Training_Embeddings.npy")
-PREDICTION_EMBEDDINGS_OUTPUT = Path("data/processed/JEL_Codes_1_SPECTER2_Prediction_Embeddings.npy")
+TRAINING_EMBEDDINGS_OUTPUT = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_Training_Embeddings.npy")
+PREDICTION_EMBEDDINGS_OUTPUT = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_Prediction_Embeddings.npy")
 
 MODEL_OPTIONS = [
     "allenai/specter2",
@@ -42,13 +42,15 @@ JEL_SOURCE_COLUMN = "jel_code_1_specter2_source"
 
 RANDOM_STATE = 2026
 CV_FOLDS = 5
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 MAX_LENGTH = 512
-POOLING_OPTIONS = ["cls", "mean"]
+POOLING_OPTIONS = ["cls",
+                   "mean"
+]
 
 CLASSIFIER_PARAM_GRID = {
     "scaler": [StandardScaler(), "passthrough"],
-    "classifier__C": [0.1, 0.3, 1, 3, 10],
+    "classifier__C": [0.1, 0.3, 1],
     "classifier__class_weight": ["balanced", None],
 }
 
@@ -72,7 +74,11 @@ def main() -> None:
     print(f"  Text columns: {TEXT_COLUMNS}")
     print(f"  Label column: {LABEL_COLUMN}")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("PyTorch version:", torch.__version__)
+    print("MPS available:", torch.backends.mps.is_available())
+    print("MPS built:", torch.backends.mps.is_built())
+
+    device = select_torch_device(torch)
     print(f"  Device: {device}")
 
     cv = make_cross_validator(labels)
@@ -257,6 +263,14 @@ def import_transformer_dependencies():
             "pip install torch transformers"
         ) from error
     return transformers, torch
+
+
+def select_torch_device(torch):
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
 
 
 def huggingface_token() -> str | None:
@@ -518,7 +532,12 @@ def grid_search_results(search: GridSearchCV, model_name: str, pooling: str) -> 
     results = pd.DataFrame(search.cv_results_)
     results["embedding_model"] = model_name
     results["pooling"] = pooling
+    results["model_option"] = model_name
+    results["pooling_option"] = pooling
+    results["class_weight"] = results["param_classifier__class_weight"].apply(format_parameter_value)
     columns = [
+        "model_option",
+        "pooling_option",
         "embedding_model",
         "pooling",
         "rank_test_score",
@@ -527,6 +546,7 @@ def grid_search_results(search: GridSearchCV, model_name: str, pooling: str) -> 
         "param_scaler",
         "param_classifier__C",
         "param_classifier__class_weight",
+        "class_weight",
     ]
     fold_columns = [
         column for column in results.columns
@@ -556,17 +576,26 @@ def print_tuning_results(results: pd.DataFrame) -> None:
             "  "
             f"accuracy={row['mean_test_score']:.4f}, "
             f"std={row['std_test_score']:.4f}, "
-            f"model={row['embedding_model']}, "
-            f"pooling={row['pooling']}, "
+            f"model_option={row['model_option']}, "
+            f"pooling_option={row['pooling_option']}, "
             f"scaler={row['param_scaler']}, "
             f"C={row['param_classifier__C']}, "
-            f"class_weight={row['param_classifier__class_weight']}"
+            f"class_weight={row['class_weight']}"
         )
 
 
 def write_tuning_results(results: pd.DataFrame) -> None:
     TUNING_RESULTS_OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(TUNING_RESULTS_OUTPUT_CSV, index=False)
+
+
+def format_parameter_value(value) -> str:
+    if pd.isna(value):
+        return "None"
+    text = str(value).strip()
+    if text == "":
+        return "None"
+    return text
 
 
 def cross_validate_classifier(

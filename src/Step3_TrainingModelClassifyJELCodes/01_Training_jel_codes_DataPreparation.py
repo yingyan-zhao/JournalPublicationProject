@@ -7,9 +7,9 @@ import pandas as pd
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
 INPUT_CSV = Path("data/processed/OpenAlex_Crossref_Webscrape_NBER_Repec_AEA_Merged.csv")
-OUTPUT_CSV = Path("data/processed/JEL_Training_Data.csv")
-OUTPUT_WITH_JEL_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-OUTPUT_WITHOUT_JEL_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data.csv")
+OUTPUT_WITH_JEL_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+OUTPUT_WITHOUT_JEL_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
 
 
