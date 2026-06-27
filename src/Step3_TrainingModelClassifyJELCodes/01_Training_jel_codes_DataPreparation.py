@@ -87,7 +87,14 @@ def main() -> None:
     print(f"  Without-JEL output CSV: {OUTPUT_WITHOUT_JEL_CSV}")
     print(f"  Rows: {len(training_data)}")
     print(f"  Columns: {list(training_data.columns)}")
+    print(f"  Rows with title: {count_nonblank(training_data, 'title')}")
+    print(f"  Rows with keywords: {count_nonblank(training_data, 'keywords')}")
+    print(f"  Rows with abstract: {count_nonblank(training_data, 'abstract')}")
     print(f"  Rows with JEL codes: {len(with_jel)}")
+    print(f"  Rows with JEL codes and title: {count_nonblank(with_jel, 'title')}")
+    print(f"  Rows with JEL codes and keywords: {count_nonblank(with_jel, 'keywords')}")
+    print(f"  Rows with JEL codes and abstract: {count_nonblank(with_jel, 'abstract')}")
+    print_jel_code_1_counts(training_data)
     print(f"  Rows without JEL codes: {len(without_jel)}")
     print("  Final columns:")
     for column in training_data.columns:
@@ -124,13 +131,14 @@ def clean_data(data: pd.DataFrame) -> pd.DataFrame:
         source_column="aea_jel_codes",
     )
     cleaned["jel_code_1"] = cleaned["jel_codes"].apply(first_jel_code_letter)
+    cleaned = drop_jel_code_1_values(cleaned, {"Y", "Z"})
     cleaned["jel_code_full"] = cleaned["jel_codes"].apply(all_jel_code_letters)
+    cleaned["keywords_openalex"] = cleaned.apply(keywords_openalex_from_row, axis=1)
     cleaned["keywords"] = coalesce_columns(
         cleaned,
         ["aea_keywords", "scrape_keywords", "keywords"],
         clean_text,
     )
-    cleaned["keywords_openalex"] = cleaned.apply(keywords_openalex_from_row, axis=1)
     if "aea_journal" in cleaned.columns:
         cleaned = cleaned.drop(columns=["aea_journal"])
     if "aea_title" in cleaned.columns:
@@ -250,6 +258,11 @@ def first_jel_code_letter(value: object) -> str:
     return ""
 
 
+def drop_jel_code_1_values(data: pd.DataFrame, codes_to_drop: set[str]) -> pd.DataFrame:
+    jel_code_1 = data["jel_code_1"].fillna("").astype(str).str.strip()
+    return data.loc[~jel_code_1.isin(codes_to_drop)].copy()
+
+
 def all_jel_code_letters(value: object) -> str:
     if pd.isna(value):
         return ""
@@ -269,6 +282,28 @@ def count_nonblank(data: pd.DataFrame, column: str) -> int:
 
 def count_blank(data: pd.DataFrame, column: str) -> int:
     return int(data[column].fillna("").astype(str).str.strip().eq("").sum())
+
+
+def print_jel_code_1_counts(data: pd.DataFrame) -> None:
+    if "jel_code_1" not in data.columns:
+        print("  Occurrences of each jel_code_1: column jel_code_1 is missing.")
+        return
+
+    counts = (
+        data["jel_code_1"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .loc[lambda values: values != ""]
+        .value_counts()
+        .sort_index()
+    )
+    print("  Occurrences of each jel_code_1:")
+    if counts.empty:
+        print("    No nonmissing jel_code_1 values.")
+        return
+    for code, count in counts.items():
+        print(f"    {code}: {count}")
 
 
 if __name__ == "__main__":
