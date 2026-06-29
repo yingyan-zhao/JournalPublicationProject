@@ -4,21 +4,21 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_SciBERT.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted_SciBERT.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_SciBERT_Validation_Predictions.csv")
-CONFUSION_MATRIX_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_SciBERT_Confusion_Matrix.csv")
-TUNING_RESULTS_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_SciBERT_Tuning_Results.csv")
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_1_SciBERT_Report.txt")
-MODEL_OUTPUT_DIR = Path("data/processed/JEL_Codes_1_SciBERT_Model")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_SciBERT.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted_SciBERT.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_SciBERT_Validation_Predictions.csv")
+CONFUSION_MATRIX_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_SciBERT_Confusion_Matrix.csv")
+TUNING_RESULTS_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_SciBERT_Tuning_Results.csv")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_1_SciBERT_Report.txt")
+MODEL_OUTPUT_DIR = Path("data/trainingmodel/JEL_Codes_1_SciBERT_Model")
 
 MODEL_NAME = "allenai/scibert_scivocab_uncased"
 TEXT_COLUMNS = [
@@ -31,7 +31,6 @@ PREDICTED_LABEL_COLUMN = "jel_code_1_predicted_scibert"
 PREDICTED_CONFIDENCE_COLUMN = "jel_code_1_predicted_scibert_confidence"
 JEL_SOURCE_COLUMN = "jel_code_1_scibert_source"
 RANDOM_STATE = 2026
-CV_FOLDS = 5
 MAX_LENGTH = 512
 PER_DEVICE_TRAIN_BATCH_SIZE = 8
 PER_DEVICE_EVAL_BATCH_SIZE = 8
@@ -42,14 +41,10 @@ TUNING_GRID = [
         "weight_decay": weight_decay,
         "warmup_ratio": warmup_ratio,
     }
-    # for learning_rate in [1e-5, 2e-5, 3e-5]
-    # for num_train_epochs in [2, 3]
-    # for weight_decay in [0, 0.01]
-    # for warmup_ratio in [0, 0.1]
-    for learning_rate in [1e-5]
-    for num_train_epochs in [2]
-    for weight_decay in [0.01]
-    for warmup_ratio in [0.1]
+    for learning_rate in [2e-5, 3e-5, 5e-5]
+    for num_train_epochs in [2, 3, 4]
+    for weight_decay in [0, 0.05]
+    for warmup_ratio in [0]
 ]
 
 
@@ -88,24 +83,20 @@ def main() -> None:
         test_dataset=test_dataset,
         label_classes=label_encoder.classes_,
     )
-    tuning_results = sorted_tuning_results(tuning_results)
+    tuning_results = sorted_tuning_results(pd.DataFrame(tuning_results))
     print_tuning_results(tuning_results)
     write_tuning_results(tuning_results)
 
-    cv_scores, validation_predictions, validation_confidence = cross_validate_best_scibert(
-        transformers=transformers,
-        tokenizer=tokenizer,
-        torch=torch,
-        texts=text.tolist(),
-        encoded_labels=encoded_labels,
-        label_encoder=label_encoder,
-        best_params=best_params,
-    )
-    validation_true_labels = label_encoder.inverse_transform(encoded_labels)
-    validation_accuracy = float(cv_scores.mean())
-    validation_accuracy_std = float(cv_scores.std())
+    validation_output = best_trainer.predict(test_dataset)
+    validation_probabilities = softmax(validation_output.predictions)
+    validation_ids = validation_probabilities.argmax(axis=1)
+    validation_predictions = label_encoder.inverse_transform(validation_ids)
+    validation_confidence = validation_probabilities.max(axis=1)
+    validation_true_labels = label_encoder.inverse_transform(test_labels)
+    validation_accuracy = accuracy_score(validation_true_labels, validation_predictions)
+    validation_jel_code_full = training_data.loc[row_id_test.index, "jel_code_full"]
     any_code_match = predicted_label_in_jel_code_full(
-        jel_code_full=training_data["jel_code_full"],
+        jel_code_full=validation_jel_code_full,
         predicted_labels=validation_predictions,
     )
     any_code_accuracy = float(any_code_match.mean())
@@ -115,9 +106,17 @@ def main() -> None:
         zero_division=0,
     )
 
+    full_training_dataset = TextClassificationDataset(text.tolist(), encoded_labels, tokenizer, torch)
+    final_trainer = train_final_scibert(
+        transformers=transformers,
+        train_dataset=full_training_dataset,
+        label_classes=label_encoder.classes_,
+        best_params=best_params,
+    )
+
     prediction_text = combine_text_columns(prediction_data, TEXT_COLUMNS).tolist()
     prediction_dataset = TextOnlyDataset(prediction_text, tokenizer, torch)
-    prediction_output = best_trainer.predict(prediction_dataset)
+    prediction_output = final_trainer.predict(prediction_dataset)
     prediction_probabilities = softmax(prediction_output.predictions)
     prediction_ids = prediction_probabilities.argmax(axis=1)
     predicted_labels = label_encoder.inverse_transform(prediction_ids)
@@ -138,26 +137,25 @@ def main() -> None:
     predicted_data.to_csv(PREDICTION_OUTPUT_CSV, index=False)
     combined.to_csv(COMBINED_OUTPUT_CSV, index=False)
     write_validation_predictions(
-        row_ids=row_ids,
+        row_ids=row_id_test,
         true_labels=validation_true_labels,
-        jel_code_full=training_data["jel_code_full"],
+        jel_code_full=validation_jel_code_full,
         predicted_labels=validation_predictions,
         confidence=validation_confidence,
         any_code_match=any_code_match,
     )
     write_confusion_matrix(validation_true_labels, validation_predictions)
     tokenizer.save_pretrained(MODEL_OUTPUT_DIR)
-    best_trainer.save_model(MODEL_OUTPUT_DIR)
+    final_trainer.save_model(MODEL_OUTPUT_DIR)
     write_report(
         validation_accuracy=validation_accuracy,
-        validation_accuracy_std=validation_accuracy_std,
         any_code_accuracy=any_code_accuracy,
         validation_report=validation_report,
         label_counts=labels.value_counts().sort_index(),
         label_classes=label_encoder.classes_,
         best_params=best_params,
         tuning_results=tuning_results,
-        cv_scores=cv_scores,
+        validation_rows=len(test_labels),
     )
 
     print("SciBERT single-label fine-tuning summary:")
@@ -167,10 +165,9 @@ def main() -> None:
     print(f"  Rows predicted: {len(predicted_data)}")
     print(f"  Tuning runs: {len(tuning_results)}")
     print(f"  Best tuning parameters: {best_params}")
-    print(f"  Cross-validation folds: {len(cv_scores)}")
-    print(f"  Cross-validation accuracy mean: {validation_accuracy:.4f}")
-    print(f"  Cross-validation accuracy std: {validation_accuracy_std:.4f}")
-    print(f"  Cross-validation any-code accuracy: {any_code_accuracy:.4f}")
+    print(f"  Validation rows: {len(test_labels)}")
+    print(f"  Validation split accuracy: {validation_accuracy:.4f}")
+    print(f"  Validation split any-code accuracy: {any_code_accuracy:.4f}")
     print(f"  Prediction output CSV: {PREDICTION_OUTPUT_CSV}")
     print(f"  Combined output CSV: {COMBINED_OUTPUT_CSV}")
     print(f"  Validation prediction CSV: {VALIDATION_OUTPUT_CSV}")
@@ -282,34 +279,52 @@ def tune_scibert(
     return best_trainer, best_params, tuning_results
 
 
-def sorted_tuning_results(tuning_results: list[dict]) -> list[dict]:
-    return sorted(
-        tuning_results,
-        key=lambda result: result.get("accuracy", 0.0),
-        reverse=True,
+def train_final_scibert(
+    transformers,
+    train_dataset: TextClassificationDataset,
+    label_classes: np.ndarray,
+    best_params: dict,
+):
+    print("  Training final SciBERT model on all labeled observations.")
+    model = build_model(transformers, label_classes)
+    training_args = build_final_training_args(
+        transformers,
+        MODEL_OUTPUT_DIR / "final_model",
+        best_params,
+    )
+    trainer = transformers.Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+    )
+    trainer.train()
+    return trainer
+
+
+def sorted_tuning_results(tuning_results: pd.DataFrame) -> pd.DataFrame:
+    if tuning_results.empty:
+        return tuning_results
+    return tuning_results.sort_values(
+        ["accuracy", "learning_rate", "num_train_epochs", "weight_decay", "warmup_ratio"],
+        ascending=[False, True, True, True, True],
+        kind="mergesort",
     )
 
 
-def print_tuning_results(tuning_results: list[dict]) -> None:
+def print_tuning_results(tuning_results: pd.DataFrame) -> None:
     print("SciBERT tuning accuracy by parameter combination:")
-    if not tuning_results:
+    if tuning_results.empty:
         print("  No tuning results.")
         return
-    for rank, result in enumerate(tuning_results, start=1):
-        print(
-            "  "
-            f"rank={rank}, "
-            f"accuracy={result['accuracy']:.4f}, "
-            f"learning_rate={result['learning_rate']}, "
-            f"num_train_epochs={result['num_train_epochs']}, "
-            f"weight_decay={result['weight_decay']}, "
-            f"warmup_ratio={result['warmup_ratio']}"
-        )
+    display = tuning_results.copy()
+    display.insert(0, "rank", range(1, len(display) + 1))
+    with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", 160):
+        print(display.to_string(index=False))
 
 
-def write_tuning_results(tuning_results: list[dict]) -> None:
+def write_tuning_results(tuning_results: pd.DataFrame) -> None:
     TUNING_RESULTS_OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(tuning_results).to_csv(TUNING_RESULTS_OUTPUT_CSV, index=False)
+    tuning_results.to_csv(TUNING_RESULTS_OUTPUT_CSV, index=False)
 
 
 def build_model(transformers, label_classes: np.ndarray):
@@ -340,76 +355,21 @@ def build_training_args(transformers, output_dir: Path, params: dict):
     )
 
 
-def make_cross_validator(encoded_labels: np.ndarray) -> StratifiedKFold:
-    label_counts = pd.Series(encoded_labels).value_counts()
-    n_splits = min(CV_FOLDS, int(label_counts.min()))
-    if n_splits < 2:
-        raise ValueError("At least two observations per JEL label are needed for cross-validation.")
-
-    return StratifiedKFold(
-        n_splits=n_splits,
-        shuffle=True,
-        random_state=RANDOM_STATE,
+def build_final_training_args(transformers, output_dir: Path, params: dict):
+    return transformers.TrainingArguments(
+        output_dir=str(output_dir),
+        eval_strategy="no",
+        save_strategy="epoch",
+        learning_rate=params["learning_rate"],
+        per_device_train_batch_size=PER_DEVICE_TRAIN_BATCH_SIZE,
+        per_device_eval_batch_size=PER_DEVICE_EVAL_BATCH_SIZE,
+        num_train_epochs=params["num_train_epochs"],
+        weight_decay=params["weight_decay"],
+        warmup_ratio=params["warmup_ratio"],
+        load_best_model_at_end=False,
+        logging_steps=50,
+        seed=RANDOM_STATE,
     )
-
-
-def cross_validate_best_scibert(
-    transformers,
-    tokenizer,
-    torch,
-    texts: list[str],
-    encoded_labels: np.ndarray,
-    label_encoder: LabelEncoder,
-    best_params: dict,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    cv = make_cross_validator(encoded_labels)
-    predicted_ids = np.zeros(len(encoded_labels), dtype=int)
-    confidence = np.zeros(len(encoded_labels), dtype=float)
-    scores = []
-    text_array = np.array(texts, dtype=object)
-
-    for fold_number, (train_index, test_index) in enumerate(
-        cv.split(text_array, encoded_labels),
-        start=1,
-    ):
-        print(f"  SciBERT cross-validation fold {fold_number}/{cv.get_n_splits()}")
-        train_dataset = TextClassificationDataset(
-            text_array[train_index].tolist(),
-            encoded_labels[train_index],
-            tokenizer,
-            torch,
-        )
-        test_dataset = TextClassificationDataset(
-            text_array[test_index].tolist(),
-            encoded_labels[test_index],
-            tokenizer,
-            torch,
-        )
-        model = build_model(transformers, label_encoder.classes_)
-        training_args = build_training_args(
-            transformers,
-            MODEL_OUTPUT_DIR / f"cv_fold_{fold_number:03d}",
-            best_params,
-        )
-        trainer = transformers.Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=test_dataset,
-            compute_metrics=lambda output: compute_metrics(output, label_encoder.classes_),
-        )
-        trainer.train()
-        output = trainer.predict(test_dataset)
-        probabilities = softmax(output.predictions)
-        fold_predicted_ids = probabilities.argmax(axis=1)
-        predicted_ids[test_index] = fold_predicted_ids
-        confidence[test_index] = probabilities.max(axis=1)
-        fold_accuracy = accuracy_score(encoded_labels[test_index], fold_predicted_ids)
-        scores.append(fold_accuracy)
-        print(f"    Fold accuracy: {fold_accuracy:.4f}")
-
-    predicted_labels = label_encoder.inverse_transform(predicted_ids)
-    return np.array(scores), predicted_labels, confidence
 
 
 def softmax(values: np.ndarray) -> np.ndarray:
@@ -482,14 +442,13 @@ def write_confusion_matrix(
 
 def write_report(
     validation_accuracy: float,
-    validation_accuracy_std: float,
     any_code_accuracy: float,
     validation_report: str,
     label_counts: pd.Series,
     label_classes: np.ndarray,
     best_params: dict,
-    tuning_results: list[dict],
-    cv_scores: np.ndarray,
+    tuning_results: pd.DataFrame,
+    validation_rows: int,
 ) -> None:
     REPORT_OUTPUT_TXT.parent.mkdir(parents=True, exist_ok=True)
     with REPORT_OUTPUT_TXT.open("w", encoding="utf-8") as file:
@@ -508,22 +467,26 @@ def write_report(
         file.write(f"  Best parameters: {best_params}\n")
         file.write(f"  Tuning results CSV: {TUNING_RESULTS_OUTPUT_CSV}\n")
         file.write("  Results:\n")
-        for result in tuning_results:
-            file.write(f"    {result}\n")
+        if tuning_results.empty:
+            file.write("    No tuning results.\n")
+        else:
+            display = tuning_results.copy()
+            display.insert(0, "rank", range(1, len(display) + 1))
+            file.write(display.to_string(index=False))
+            file.write("\n")
         file.write("\n")
+        file.write("Model selection:\n")
+        file.write("  Used one train/validation split for tuning.\n")
+        file.write("  After choosing best parameters, trained one final model on all labeled observations.\n\n")
         file.write("Label counts:\n")
         file.write(label_counts.to_string())
         file.write("\n\n")
-        file.write(f"Cross-validation folds: {len(cv_scores)}\n")
-        file.write(f"Cross-validation accuracy mean: {validation_accuracy:.4f}\n")
-        file.write(f"Cross-validation accuracy std: {validation_accuracy_std:.4f}\n")
-        file.write(f"Cross-validation any-code accuracy: {any_code_accuracy:.4f}\n")
+        file.write(f"Validation rows: {validation_rows}\n")
+        file.write(f"Validation split accuracy: {validation_accuracy:.4f}\n")
+        file.write(f"Validation split any-code accuracy: {any_code_accuracy:.4f}\n")
         file.write(f"Confusion matrix CSV: {CONFUSION_MATRIX_OUTPUT_CSV}\n")
-        file.write("Cross-validation fold accuracies:\n")
-        for fold_number, score in enumerate(cv_scores, start=1):
-            file.write(f"  Fold {fold_number}: {score:.4f}\n")
         file.write("\n")
-        file.write("Cross-validation classification report:\n")
+        file.write("Validation split classification report:\n")
         file.write(validation_report)
         file.write("\n")
 

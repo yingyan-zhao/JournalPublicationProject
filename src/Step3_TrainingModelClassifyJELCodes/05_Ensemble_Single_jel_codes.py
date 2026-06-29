@@ -9,27 +9,30 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
-TFIDF_VALIDATION_CSV = Path("data/processed/JEL_Codes_1_TFIDF_Validation_Predictions.csv")
-SPECTER2_VALIDATION_CSV = Path("data/processed/JEL_Codes_1_SPECTER2_Validation_Predictions.csv")
-SCIBERT_VALIDATION_CSV = Path("data/processed/JEL_Codes_1_SciBERT_Validation_Predictions.csv")
+TFIDF_VALIDATION_CSV = Path("data/trainingmodel/JEL_Codes_1_TFIDF_Validation_Predictions.csv")
+SPECTER2_VALIDATION_CSV = Path("data/trainingmodel/JEL_Codes_1_SPECTER2_Validation_Predictions.csv")
+SCIBERT_VALIDATION_CSV = Path("data/trainingmodel/JEL_Codes_1_SciBERT_Validation_Predictions.csv")
 
-TFIDF_PREDICTION_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted.csv")
-SPECTER2_PREDICTION_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_SPECTER2.csv")
-SCIBERT_PREDICTION_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_SciBERT.csv")
+TFIDF_PREDICTION_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted.csv")
+SPECTER2_PREDICTION_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_SPECTER2.csv")
+SCIBERT_PREDICTION_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_SciBERT.csv")
 
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_Ensemble.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted_Ensemble.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_Ensemble_Validation_Predictions.csv")
-CONFUSION_MATRIX_OUTPUT_CSV = Path("data/processed/JEL_Codes_1_Ensemble_Confusion_Matrix.csv")
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_1_Ensemble_Report.txt")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_Ensemble.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted_Ensemble.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_Ensemble_Validation_Predictions.csv")
+CONFUSION_MATRIX_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_Ensemble_Confusion_Matrix.csv")
+ACCURACY_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_Ensemble_Accuracy_Summary.csv")
+ENSEMBLE_TUNING_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_1_Ensemble_SciBERT_Weight_Tuning.csv")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_1_Ensemble_Report.txt")
 
 LABEL_COLUMN = "jel_code_1"
 PREDICTED_LABEL_COLUMN = "jel_code_1_predicted_ensemble"
 PREDICTED_CONFIDENCE_COLUMN = "jel_code_1_predicted_ensemble_confidence"
 JEL_SOURCE_COLUMN = "jel_code_1_ensemble_source"
+SCIBERT_WEIGHT_OPTIONS = [1.0, 1.5, 2.0, 2.5]
 
 MODEL_SPECS = [
     {
@@ -66,8 +69,15 @@ def main() -> None:
     training_data = read_data(TRAINING_INPUT_CSV)
     prediction_data = read_data(PREDICTION_INPUT_CSV)
 
-    validation = build_validation_ensemble()
-    prediction = build_prediction_ensemble(prediction_data)
+    ensemble_tuning = tune_scibert_weight()
+    best_scibert_weight = float(ensemble_tuning.iloc[0]["scibert_weight"])
+    print_ensemble_tuning(ensemble_tuning)
+
+    validation = build_validation_ensemble(scibert_weight=best_scibert_weight)
+    prediction = build_prediction_ensemble(
+        prediction_data,
+        scibert_weight=best_scibert_weight,
+    )
 
     validation_accuracy = accuracy_score(
         validation["jel_code_1_true"],
@@ -86,11 +96,18 @@ def main() -> None:
     )
     model_accuracies = model_validation_accuracies(validation)
     model_any_code_accuracies = model_any_code_accuracies_from_validation(validation)
+    accuracy_summary = build_accuracy_summary(
+        ensemble_accuracy=validation_accuracy,
+        ensemble_any_code_accuracy=any_code_accuracy,
+        model_accuracies=model_accuracies,
+        model_any_code_accuracies=model_any_code_accuracies,
+    )
 
     predicted_data = prediction_data.copy()
     predicted_data[PREDICTED_LABEL_COLUMN] = prediction[PREDICTED_LABEL_COLUMN]
     predicted_data[PREDICTED_CONFIDENCE_COLUMN] = prediction[PREDICTED_CONFIDENCE_COLUMN].round(4)
     predicted_data[JEL_SOURCE_COLUMN] = "predicted_ensemble"
+    predicted_data["ensemble_scibert_weight"] = best_scibert_weight
     for model_spec in MODEL_SPECS:
         model_name = model_spec["name"]
         predicted_data[f"{model_name}_prediction_used"] = prediction[f"{model_name}_prediction"]
@@ -106,13 +123,19 @@ def main() -> None:
     predicted_data.to_csv(PREDICTION_OUTPUT_CSV, index=False)
     combined.to_csv(COMBINED_OUTPUT_CSV, index=False)
     validation.to_csv(VALIDATION_OUTPUT_CSV, index=False)
-    write_confusion_matrix(validation["jel_code_1_true"], validation[PREDICTED_LABEL_COLUMN])
+    confusion = write_confusion_matrix(validation["jel_code_1_true"], validation[PREDICTED_LABEL_COLUMN])
+    write_accuracy_summary(accuracy_summary)
+    write_ensemble_tuning(ensemble_tuning)
     write_report(
         validation_accuracy=validation_accuracy,
         any_code_accuracy=any_code_accuracy,
         validation_report=validation_report,
         model_accuracies=model_accuracies,
         model_any_code_accuracies=model_any_code_accuracies,
+        accuracy_summary=accuracy_summary,
+        ensemble_tuning=ensemble_tuning,
+        best_scibert_weight=best_scibert_weight,
+        confusion=confusion,
         validation_rows=len(validation),
         prediction_rows=len(predicted_data),
     )
@@ -122,6 +145,7 @@ def main() -> None:
     print(f"  Prediction input CSV: {PREDICTION_INPUT_CSV}")
     print(f"  Validation rows: {len(validation)}")
     print(f"  Rows predicted: {len(predicted_data)}")
+    print(f"  Best SciBERT ensemble weight: {best_scibert_weight}")
     for model_name, accuracy in model_accuracies.items():
         print(f"  {model_name} validation accuracy: {accuracy:.4f}")
         print(f"  {model_name} any-code accuracy: {model_any_code_accuracies[model_name]:.4f}")
@@ -131,6 +155,8 @@ def main() -> None:
     print(f"  Combined output CSV: {COMBINED_OUTPUT_CSV}")
     print(f"  Validation prediction CSV: {VALIDATION_OUTPUT_CSV}")
     print(f"  Confusion matrix CSV: {CONFUSION_MATRIX_OUTPUT_CSV}")
+    print(f"  Accuracy summary CSV: {ACCURACY_OUTPUT_CSV}")
+    print(f"  SciBERT weight tuning CSV: {ENSEMBLE_TUNING_OUTPUT_CSV}")
     print(f"  Model report: {REPORT_OUTPUT_TXT}")
 
 
@@ -140,7 +166,45 @@ def read_data(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, dtype=str, keep_default_na=False)
 
 
-def build_validation_ensemble() -> pd.DataFrame:
+def tune_scibert_weight() -> pd.DataFrame:
+    rows = []
+    for scibert_weight in SCIBERT_WEIGHT_OPTIONS:
+        validation = build_validation_ensemble(scibert_weight=scibert_weight)
+        accuracy = accuracy_score(
+            validation["jel_code_1_true"],
+            validation[PREDICTED_LABEL_COLUMN],
+        )
+        any_code_match = predicted_label_in_jel_code_full(
+            validation["jel_code_full"],
+            validation[PREDICTED_LABEL_COLUMN],
+        )
+        rows.append(
+            {
+                "scibert_weight": scibert_weight,
+                "accuracy": accuracy,
+                "any_code_accuracy": float(any_code_match.mean()),
+            }
+        )
+
+    return pd.DataFrame(rows).sort_values(
+        ["accuracy", "any_code_accuracy", "scibert_weight"],
+        ascending=[False, False, True],
+        kind="mergesort",
+    )
+
+
+def print_ensemble_tuning(ensemble_tuning: pd.DataFrame) -> None:
+    print("SciBERT ensemble weight tuning:")
+    with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", 120):
+        print(ensemble_tuning.to_string(index=False))
+
+
+def write_ensemble_tuning(ensemble_tuning: pd.DataFrame) -> None:
+    ENSEMBLE_TUNING_OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    ensemble_tuning.to_csv(ENSEMBLE_TUNING_OUTPUT_CSV, index=False)
+
+
+def build_validation_ensemble(scibert_weight: float) -> pd.DataFrame:
     merged = None
     for model_spec in MODEL_SPECS:
         model_validation = read_model_validation(model_spec)
@@ -157,8 +221,9 @@ def build_validation_ensemble() -> pd.DataFrame:
         raise ValueError("No validation predictions were available to ensemble.")
 
     ensemble = merged.copy()
+    ensemble["ensemble_scibert_weight"] = scibert_weight
     ensemble[[PREDICTED_LABEL_COLUMN, PREDICTED_CONFIDENCE_COLUMN]] = ensemble.apply(
-        lambda row: pd.Series(ensemble_vote_from_row(row, validation=True)),
+        lambda row: pd.Series(ensemble_vote_from_row(row, scibert_weight=scibert_weight)),
         axis=1,
     )
     return ensemble
@@ -188,7 +253,7 @@ def read_model_validation(model_spec: dict) -> pd.DataFrame:
     return selected
 
 
-def build_prediction_ensemble(prediction_data: pd.DataFrame) -> pd.DataFrame:
+def build_prediction_ensemble(prediction_data: pd.DataFrame, scibert_weight: float) -> pd.DataFrame:
     ensemble = pd.DataFrame(index=prediction_data.index)
     expected_rows = len(prediction_data)
 
@@ -213,30 +278,32 @@ def build_prediction_ensemble(prediction_data: pd.DataFrame) -> pd.DataFrame:
         ensemble[f"{model_name}_prediction"] = model_prediction[model_spec["prediction_column"]]
         ensemble[f"{model_name}_confidence"] = model_prediction[model_spec["prediction_confidence_column"]]
 
+    ensemble["ensemble_scibert_weight"] = scibert_weight
     ensemble[[PREDICTED_LABEL_COLUMN, PREDICTED_CONFIDENCE_COLUMN]] = ensemble.apply(
-        lambda row: pd.Series(ensemble_vote_from_row(row, validation=False)),
+        lambda row: pd.Series(ensemble_vote_from_row(row, scibert_weight=scibert_weight)),
         axis=1,
     )
     return ensemble
 
 
-def ensemble_vote_from_row(row: pd.Series, validation: bool) -> tuple[str, float]:
+def ensemble_vote_from_row(row: pd.Series, scibert_weight: float) -> tuple[str, float]:
     votes = []
     for model_spec in MODEL_SPECS:
         model_name = model_spec["name"]
         prediction = clean_text(row.get(f"{model_name}_prediction", ""))
         confidence = to_float(row.get(f"{model_name}_confidence", 0.0))
         if prediction:
-            votes.append((prediction, confidence))
+            weight = model_vote_weight(model_name, scibert_weight)
+            votes.append((prediction, confidence, weight))
 
     if not votes:
         return "", 0.0
 
     vote_count = defaultdict(int)
     confidence_sum = defaultdict(float)
-    for prediction, confidence in votes:
-        vote_count[prediction] += 1
-        confidence_sum[prediction] += confidence
+    for prediction, confidence, weight in votes:
+        vote_count[prediction] += weight
+        confidence_sum[prediction] += confidence * weight
 
     best_label = sorted(
         vote_count,
@@ -249,6 +316,12 @@ def ensemble_vote_from_row(row: pd.Series, validation: bool) -> tuple[str, float
     )[0]
     average_confidence = confidence_sum[best_label] / vote_count[best_label]
     return best_label, average_confidence
+
+
+def model_vote_weight(model_name: str, scibert_weight: float) -> float:
+    if model_name == "scibert":
+        return scibert_weight
+    return 1.0
 
 
 def model_validation_accuracies(validation: pd.DataFrame) -> dict[str, float]:
@@ -274,6 +347,38 @@ def model_any_code_accuracies_from_validation(validation: pd.DataFrame) -> dict[
     return accuracies
 
 
+def build_accuracy_summary(
+    ensemble_accuracy: float,
+    ensemble_any_code_accuracy: float,
+    model_accuracies: dict[str, float],
+    model_any_code_accuracies: dict[str, float],
+) -> pd.DataFrame:
+    rows = []
+    for model_spec in MODEL_SPECS:
+        model_name = model_spec["name"]
+        rows.append(
+            {
+                "model": model_name,
+                "accuracy": model_accuracies.get(model_name, np.nan),
+                "any_code_accuracy": model_any_code_accuracies.get(model_name, np.nan),
+            }
+        )
+
+    rows.append(
+        {
+            "model": "ensemble",
+            "accuracy": ensemble_accuracy,
+            "any_code_accuracy": ensemble_any_code_accuracy,
+        }
+    )
+    return pd.DataFrame(rows)
+
+
+def write_accuracy_summary(accuracy_summary: pd.DataFrame) -> None:
+    ACCURACY_OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    accuracy_summary.to_csv(ACCURACY_OUTPUT_CSV, index=False)
+
+
 def predicted_label_in_jel_code_full(
     jel_code_full: pd.Series,
     predicted_labels: pd.Series,
@@ -297,7 +402,7 @@ def split_jel_code_full(value: str) -> set[str]:
     }
 
 
-def write_confusion_matrix(true_labels: pd.Series, predicted_labels: pd.Series) -> None:
+def write_confusion_matrix(true_labels: pd.Series, predicted_labels: pd.Series) -> pd.DataFrame:
     labels_order = sorted(true_labels.unique())
     matrix = confusion_matrix(true_labels, predicted_labels, labels=labels_order)
     confusion = pd.DataFrame(
@@ -307,6 +412,7 @@ def write_confusion_matrix(true_labels: pd.Series, predicted_labels: pd.Series) 
     )
     CONFUSION_MATRIX_OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     confusion.to_csv(CONFUSION_MATRIX_OUTPUT_CSV)
+    return confusion
 
 
 def write_report(
@@ -315,6 +421,10 @@ def write_report(
     validation_report: str,
     model_accuracies: dict[str, float],
     model_any_code_accuracies: dict[str, float],
+    accuracy_summary: pd.DataFrame,
+    ensemble_tuning: pd.DataFrame,
+    best_scibert_weight: float,
+    confusion: pd.DataFrame,
     validation_rows: int,
     prediction_rows: int,
 ) -> None:
@@ -324,8 +434,14 @@ def write_report(
         file.write("====================================\n\n")
         file.write("Model: majority vote ensemble with confidence tie-break\n")
         file.write(f"Label column: {LABEL_COLUMN}\n")
+        file.write(f"SciBERT weight options: {SCIBERT_WEIGHT_OPTIONS}\n")
+        file.write(f"Best SciBERT weight: {best_scibert_weight}\n")
         file.write(f"Validation rows: {validation_rows}\n")
         file.write(f"Prediction rows: {prediction_rows}\n\n")
+        file.write("SciBERT weight tuning:\n")
+        file.write(f"  Tuning results CSV: {ENSEMBLE_TUNING_OUTPUT_CSV}\n")
+        file.write(ensemble_tuning.to_string(index=False))
+        file.write("\n\n")
         file.write("Input models:\n")
         for model_spec in MODEL_SPECS:
             model_name = model_spec["name"]
@@ -337,7 +453,14 @@ def write_report(
         file.write("\n")
         file.write(f"Ensemble validation accuracy: {validation_accuracy:.4f}\n")
         file.write(f"Ensemble any-code accuracy: {any_code_accuracy:.4f}\n")
+        file.write(f"Accuracy summary CSV: {ACCURACY_OUTPUT_CSV}\n")
+        file.write("Accuracy summary:\n")
+        file.write(accuracy_summary.to_string(index=False))
+        file.write("\n\n")
         file.write(f"Confusion matrix CSV: {CONFUSION_MATRIX_OUTPUT_CSV}\n")
+        file.write("Confusion matrix:\n")
+        file.write(confusion.to_string())
+        file.write("\n\n")
         file.write(f"Validation prediction CSV: {VALIDATION_OUTPUT_CSV}\n\n")
         file.write("Validation classification report:\n")
         file.write(validation_report)
