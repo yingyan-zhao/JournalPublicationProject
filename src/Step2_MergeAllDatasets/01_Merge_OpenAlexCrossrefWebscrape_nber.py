@@ -8,7 +8,7 @@ import pandas as pd
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
 OPENALEX_CROSSREF_WEBSCRAPED_INPUT_CSV = Path("data/processed/OpenAlex_Crossref_All_Webscraped_Cleaned.csv")
-NBER_CLEANED_INPUT_CSV = Path("data/processed/NBER_Working_Papers_Metadata_After1995_Cleaned.csv")
+NBER_RAW_INPUT_CSV = Path("data/raw_csv/NBER_Working_Papers_Metadata_After1995.csv")
 MERGED_OUTPUT_CSV = Path("data/processed/OpenAlex_Crossref_Webscrape_NBER_Merged.csv")
 PAPERS_TO_DROP = {"w7565", "w13800", "w21929", "w8649"}
 NBER_COLUMNS_TO_DROP_AFTER_MERGE = [
@@ -26,7 +26,7 @@ NBER_COLUMNS_TO_DROP_AFTER_MERGE = [
 
 def main() -> None:
     openalex_crossref = read_csv(OPENALEX_CROSSREF_WEBSCRAPED_INPUT_CSV)
-    nber = read_csv(NBER_CLEANED_INPUT_CSV)
+    nber = read_nber_data(NBER_RAW_INPUT_CSV)
     nber["nber_title"] = nber["nber_title"].apply(keep_letters_and_numbers)
     nber = rename_specific_nber_titles(nber)
     nber_duplicate_title_stats = duplicate_title_stats(nber, "nber_title")
@@ -38,7 +38,7 @@ def main() -> None:
     print("OpenAlex/Crossref/Webscrape + NBER merge summary:")
     print(f"  Base input CSV: {OPENALEX_CROSSREF_WEBSCRAPED_INPUT_CSV}")
     print(f"  Base rows: {len(openalex_crossref)}")
-    print(f"  Cleaned NBER CSV: {NBER_CLEANED_INPUT_CSV}")
+    print(f"  Raw NBER input CSV: {NBER_RAW_INPUT_CSV}")
     print(f"  Cleaned NBER rows: {len(nber)}")
     print(f"  NBER exact duplicate title rows: {nber_duplicate_title_stats['exact_duplicate_rows']}")
     print(f"  NBER exact duplicate title groups: {nber_duplicate_title_stats['exact_duplicate_groups']}")
