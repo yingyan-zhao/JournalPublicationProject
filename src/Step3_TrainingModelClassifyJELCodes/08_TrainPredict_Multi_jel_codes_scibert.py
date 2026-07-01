@@ -104,6 +104,13 @@ def main() -> None:
     validation_predictions = probabilities_to_multilabel(validation_probabilities, threshold=best_threshold)
     metrics = multilabel_metrics(test_labels, validation_predictions)
 
+    observed_dataset = TextOnlyDataset(text.tolist(), tokenizer, torch)
+    observed_output = best_trainer.predict(observed_dataset)
+    observed_probabilities = sigmoid(observed_output.predictions)
+    observed_matrix = probabilities_to_multilabel(observed_probabilities, threshold=best_threshold)
+    observed_labels = format_multilabel_predictions(label_binarizer, observed_matrix)
+    observed_confidence = observed_probabilities.max(axis=1)
+
     prediction_dataset = TextOnlyDataset(prediction_text, tokenizer, torch)
     prediction_output = best_trainer.predict(prediction_dataset)
     prediction_probabilities = sigmoid(prediction_output.predictions)
@@ -117,9 +124,9 @@ def main() -> None:
     predicted_data[JEL_SOURCE_COLUMN] = "predicted_multi_scibert"
 
     observed_data = training_data.copy()
-    observed_data[PREDICTED_LABEL_COLUMN] = observed_data[LABEL_COLUMN]
-    observed_data[PREDICTED_CONFIDENCE_COLUMN] = ""
-    observed_data[JEL_SOURCE_COLUMN] = "observed"
+    observed_data[PREDICTED_LABEL_COLUMN] = observed_labels
+    observed_data[PREDICTED_CONFIDENCE_COLUMN] = observed_confidence.round(4)
+    observed_data[JEL_SOURCE_COLUMN] = "observed_with_model_prediction"
     combined = pd.concat([observed_data, predicted_data], ignore_index=True, sort=False)
 
     PREDICTION_OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
