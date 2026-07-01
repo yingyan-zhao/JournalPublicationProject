@@ -21,19 +21,19 @@ from sklearn.preprocessing import MultiLabelBinarizer, StandardScaler
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_Multi_SPECTER2.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted_Multi_SPECTER2.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_SPECTER2_Validation_Predictions.csv")
-TUNING_RESULTS_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_SPECTER2_Tuning_Results.csv")
-THRESHOLD_TUNING_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_SPECTER2_Threshold_Tuning_Results.csv")
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_Multi_SPECTER2_Report.txt")
-MODEL_OUTPUT = Path("data/processed/JEL_Codes_Multi_SPECTER2_OneVsRest_LogisticRegression.joblib")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_Multi_SPECTER2.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted_Multi_SPECTER2.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_Validation_Predictions.csv")
+TUNING_RESULTS_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_Tuning_Results.csv")
+THRESHOLD_TUNING_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_Threshold_Tuning_Results.csv")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_Report.txt")
+MODEL_OUTPUT = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_OneVsRest_LogisticRegression.joblib")
 
-TRAINING_EMBEDDINGS_OUTPUT = Path("data/processed/JEL_Codes_Multi_SPECTER2_Training_Embeddings.npy")
-PREDICTION_EMBEDDINGS_OUTPUT = Path("data/processed/JEL_Codes_Multi_SPECTER2_Prediction_Embeddings.npy")
+TRAINING_EMBEDDINGS_OUTPUT = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_Training_Embeddings.npy")
+PREDICTION_EMBEDDINGS_OUTPUT = Path("data/trainingmodel/JEL_Codes_Multi_SPECTER2_Prediction_Embeddings.npy")
 
 MODEL_OPTIONS = [
     "allenai/specter2",
@@ -54,11 +54,11 @@ TEST_SIZE = 0.2
 CV_FOLDS = 3
 BATCH_SIZE = 16
 MAX_LENGTH = 512
-THRESHOLD_OPTIONS = [0.2, 0.3, 0.4, 0.5, 0.6]
+THRESHOLD_OPTIONS = [0.3, 0.4, 0.5, 0.6]
 
 CLASSIFIER_PARAM_GRID = {
     "scaler": [StandardScaler(), "passthrough"],
-    "classifier__estimator__C": [0.1, 0.3, 1, 3, 10],
+    "classifier__estimator__C": [0.1, 0.3, 1, 3],
     "classifier__estimator__class_weight": ["balanced", None],
 }
 
@@ -101,7 +101,11 @@ def main() -> None:
     print(f"  Label column: {LABEL_COLUMN}")
     print(f"  Threshold options: {THRESHOLD_OPTIONS}")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("PyTorch version:", torch.__version__)
+    print("MPS available:", torch.backends.mps.is_available())
+    print("MPS built:", torch.backends.mps.is_built())
+
+    device = select_torch_device(torch)
     print(f"  Device: {device}")
 
     cv = KFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
@@ -271,6 +275,14 @@ def import_transformer_dependencies():
             "pip install torch transformers"
         ) from error
     return transformers, torch
+
+
+def select_torch_device(torch):
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
 
 
 def huggingface_token() -> str | None:

@@ -15,16 +15,16 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_Multi_SciBERT.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted_Multi_SciBERT.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_SciBERT_Validation_Predictions.csv")
-TUNING_RESULTS_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_SciBERT_Tuning_Results.csv")
-THRESHOLD_TUNING_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_SciBERT_Threshold_Tuning_Results.csv")
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_Multi_SciBERT_Report.txt")
-MODEL_OUTPUT_DIR = Path("data/processed/JEL_Codes_Multi_SciBERT_Model")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_Multi_SciBERT.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted_Multi_SciBERT.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_SciBERT_Validation_Predictions.csv")
+TUNING_RESULTS_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_SciBERT_Tuning_Results.csv")
+THRESHOLD_TUNING_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_SciBERT_Threshold_Tuning_Results.csv")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_Multi_SciBERT_Report.txt")
+MODEL_OUTPUT_DIR = Path("data/trainingmodel/JEL_Codes_Multi_SciBERT_Model")
 
 MODEL_NAME = "allenai/scibert_scivocab_uncased"
 TEXT_COLUMNS = ["title", "keywords", "abstract"]
@@ -39,7 +39,7 @@ MAX_LENGTH = 512
 PER_DEVICE_TRAIN_BATCH_SIZE = 8
 PER_DEVICE_EVAL_BATCH_SIZE = 8
 TUNING_THRESHOLD = 0.5
-THRESHOLD_OPTIONS = [0.2, 0.3, 0.4, 0.5, 0.6]
+THRESHOLD_OPTIONS = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 TUNING_GRID = [
     {
@@ -49,16 +49,11 @@ TUNING_GRID = [
         "warmup_ratio": warmup_ratio,
     }
     # Restore these full grids when you are ready for a long run:
-    # for learning_rate in [1e-5, 2e-5, 3e-5]
-    # for num_train_epochs in [2, 3]
-    # for weight_decay in [0, 0.01]
-    # for warmup_ratio in [0, 0.1]
-    for learning_rate in [1e-5]
-    for num_train_epochs in [2]
-    for weight_decay in [0.01]
-    for warmup_ratio in [0.1]
+    for learning_rate in [2e-5, 3e-5, 4e-5]
+    for num_train_epochs in [3, 4, 5]
+    for weight_decay in [0.01, 0.05]
+    for warmup_ratio in [0]
 ]
-
 
 def main() -> None:
     transformers, torch = import_finetuning_dependencies()

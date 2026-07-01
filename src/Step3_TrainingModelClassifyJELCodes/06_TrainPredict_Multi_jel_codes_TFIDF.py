@@ -22,16 +22,16 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
-TRAINING_INPUT_CSV = Path("data/processed/JEL_Training_Data_With_JEL.csv")
-PREDICTION_INPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL.csv")
+TRAINING_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_JEL.csv")
+PREDICTION_INPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL.csv")
 
-PREDICTION_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_Without_JEL_Predicted_Multi_TFIDF.csv")
-COMBINED_OUTPUT_CSV = Path("data/processed/JEL_Training_Data_With_Observed_And_Predicted_Multi_TFIDF.csv")
-VALIDATION_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_TFIDF_Validation_Predictions.csv")
-TUNING_RESULTS_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_TFIDF_Tuning_Results.csv")
-THRESHOLD_TUNING_OUTPUT_CSV = Path("data/processed/JEL_Codes_Multi_TFIDF_Threshold_Tuning_Results.csv")
-REPORT_OUTPUT_TXT = Path("data/processed/JEL_Codes_Multi_TFIDF_Report.txt")
-MODEL_OUTPUT = Path("data/processed/JEL_Codes_Multi_TFIDF_OneVsRest_LogisticRegression.joblib")
+PREDICTION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_Without_JEL_Predicted_Multi_TFIDF.csv")
+COMBINED_OUTPUT_CSV = Path("data/trainingmodel/JEL_Training_Data_With_Observed_And_Predicted_Multi_TFIDF.csv")
+VALIDATION_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_TFIDF_Validation_Predictions.csv")
+TUNING_RESULTS_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_TFIDF_Tuning_Results.csv")
+THRESHOLD_TUNING_OUTPUT_CSV = Path("data/trainingmodel/JEL_Codes_Multi_TFIDF_Threshold_Tuning_Results.csv")
+REPORT_OUTPUT_TXT = Path("data/trainingmodel/JEL_Codes_Multi_TFIDF_Report.txt")
+MODEL_OUTPUT = Path("data/trainingmodel/JEL_Codes_Multi_TFIDF_OneVsRest_LogisticRegression.joblib")
 
 TEXT_COLUMNS = ["title", "keywords", "abstract"]
 LABEL_COLUMN = "jel_code_full"
@@ -41,15 +41,15 @@ JEL_SOURCE_COLUMN = "jel_code_full_tfidf_source"
 
 RANDOM_STATE = 2026
 TEST_SIZE = 0.2
-THRESHOLD_OPTIONS = [0.2, 0.3, 0.4, 0.5, 0.6]
+THRESHOLD_OPTIONS = [0.4, 0.5, 0.6]
 
 PARAM_GRID = {
-    "tfidf__ngram_range": [(1, 1), (1, 2), (1, 3)],
-    "tfidf__min_df": [2, 3, 5],
-    "tfidf__max_df": [0.9, 0.95, 1.0],
-    "tfidf__max_features": [30000, 50000, 100000],
-    "classifier__estimator__C": [0.3, 1, 3],
-    "classifier__estimator__class_weight": ["balanced", None],
+    "tfidf__ngram_range": [(1, 2), (1, 3),(1, 4)],
+    "tfidf__min_df": [3, 5],
+    "tfidf__max_df": [0.9],
+    "tfidf__max_features": [50000],
+    "classifier__estimator__C": [1, 3],
+    "classifier__estimator__class_weight": ["balanced"],
 }
 
 SCORING = {
