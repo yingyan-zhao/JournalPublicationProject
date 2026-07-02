@@ -11,6 +11,11 @@ AEA_INPUT_CSV = Path("data/raw_csv/AEA_Journals_Papers.csv")
 BASE_INPUT_CSV = Path("data/processed/OpenAlex_Crossref_Webscrape_NBER_Repec_Merged.csv")
 AEA_CLEANED_OUTPUT_CSV = Path("data/processed/AEA_Journals_Papers_Cleaned.csv")
 MERGED_OUTPUT_CSV = Path("data/processed/OpenAlex_Crossref_Webscrape_NBER_Repec_AEA_Merged.csv")
+DOI_FULL_TO_DROP_AFTER_MERGE = {
+    # "10.1086/342812",
+    # "10.1086/339337",
+    # "10.1086/342337",
+}
 AEA_COLUMNS_TO_DROP_AFTER_MERGE = [
     "aea_doi",
     "aea_title",
@@ -19,6 +24,8 @@ AEA_COLUMNS_TO_DROP_AFTER_MERGE = [
     "aea_abstract",
     "aea_jel_codes",
 ]
+
+
 
 AEA_COLUMNS_TO_DROP = [
     "journal_slug",
@@ -77,6 +84,8 @@ def main() -> None:
     print(f"  Base-only rows: {merge_summary['base_only']}")
     print(f"  AEA-only rows: {merge_summary['aea_only']}")
     print(f"  Dropped base-only rows with blank doi_list: {merge_summary['dropped_base_only_blank_doi_list']}")
+    print(f"  Dropped excluded doi_full rows: {merge_summary['dropped_excluded_doi_full']}")
+    print(f"  Dropped Suggested by author rows: {merge_summary['dropped_suggested_by_author_rows']}")
 
 
 def read_aea_data(path: Path) -> pd.DataFrame:
@@ -150,6 +159,8 @@ def merge_base_with_aea(
         "base_only": 0,
         "aea_only": 0,
         "dropped_base_only_blank_doi_list": 0,
+        "dropped_excluded_doi_full": 0,
+        "dropped_suggested_by_author_rows": 0,
     }
 
     matched_frames = []
@@ -203,6 +214,10 @@ def merge_base_with_aea(
     merged["abstract"] = prefer_nonblank_source_column(merged, "abstract", "aea_abstract")
     merged["jel_codes"] = prefer_nonblank_source_column(merged, "jel_codes", "aea_jel_codes")
     merged["doi_full"] = merged.apply(doi_full_from_row, axis=1)
+    merged, dropped_excluded_doi_full = drop_excluded_doi_full(merged)
+    summary["dropped_excluded_doi_full"] = dropped_excluded_doi_full
+    merged, dropped_suggested_by_author_rows = drop_suggested_by_author_rows(merged)
+    summary["dropped_suggested_by_author_rows"] = dropped_suggested_by_author_rows
     merged["duplicate_doi_tag"] = duplicate_doi_tag(merged)
     merged["duplicate_title_tag"] = duplicate_exported_title_tag(merged)
     return merged.reset_index(drop=True), summary
@@ -294,6 +309,22 @@ def drop_base_only_blank_doi_list(data: pd.DataFrame) -> tuple[pd.DataFrame, int
     doi_list = get_column(data, "doi_list").fillna("").astype(str).str.strip()
     match_strategy = get_column(data, "aea_match_strategy").fillna("").astype(str).str.strip()
     drop_rows = (doi_list == "") & (match_strategy == "base_only")
+    return data.loc[~drop_rows].copy(), int(drop_rows.sum())
+
+
+def drop_excluded_doi_full(data: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    doi_full = get_column(data, "doi_full").apply(normalize_doi)
+    drop_rows = doi_full.isin(DOI_FULL_TO_DROP_AFTER_MERGE)
+    return data.loc[~drop_rows].copy(), int(drop_rows.sum())
+
+
+def drop_suggested_by_author_rows(data: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    authors = get_column(data, "openalex_authors").fillna("").astype(str)
+    raw_author_names = get_column(data, "openalex_raw_author_names").fillna("").astype(str)
+    drop_rows = (
+        authors.str.contains("Suggested by", case=False, regex=False)
+        | raw_author_names.str.contains("Suggested by", case=False, regex=False)
+    )
     return data.loc[~drop_rows].copy(), int(drop_rows.sum())
 
 
