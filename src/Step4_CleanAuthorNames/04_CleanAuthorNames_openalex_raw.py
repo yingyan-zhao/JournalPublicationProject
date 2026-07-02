@@ -24,10 +24,12 @@ OPENALEX_RAW_AUTHOR_COLUMN = "openalex_raw_author_names"
 # Step 3. Splits openalex_raw_author_names by semicolon “;”, so one paper with multiple authors becomes multiple author rows.
 # Step 4. Drop “, Jr.” in openalex_raw_author_names, also drop “Jr.“ in openalex_raw_author_names
 #
-# Step 4. If openalex_raw_author_names has “,” in it, it means openalex_raw_author_names stores last name first, and then first name, you need to reverse it
-# Step 5. Split first name and last name, also calculate the length of  first and last name
-# Step 6. For these two (ALVAREZ F. E., ALVAREZ F) , it should be F. E. ALVAREZ ; Jomo K S should be  K S Jomo; Juan R. A. Bobenrieth H. Should be Juan R. A. Bobenrieth; Amit G should be G Amit , LIPPI F should be F LIPPI, Eugenio S. A. Bobenrieth H. Should be Eugenio S. A. Bobenrieth
-# Step 7. If openalex_author_first_name has only 1 single letter, then take the second sequence  in openalex_raw_author_names. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as openalex_author_first_name
+# Step 5. If openalex_raw_author_names has “,” in it, it means openalex_raw_author_names stores last name first, and then first name, you need to reverse it
+# Step 6. For these two (ALVAREZ F. E., ALVAREZ F) , it should be F. E. ALVAREZ ; Jomo K S should be Jomo KS; Amit G should be G Amit , LIPPI F should be F LIPPI
+
+# Step 7. Split first name and last name, also calculate the length of  first and last name
+# Step 8. If openalex_author_first_name has only 1 single letter, then take the second sequence  in openalex_raw_author_names. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as openalex_author_first_name
+# Step 9. If openalex_author_last_name has only 1 single letter, then take the second to the last sequence in openalex_raw_author_names. If the second to the last sequence is not equal to first name, and the second to the last sequence is not single letter, and take the second to the last sequence as the last name. Otherwise keep the original single letter as openalex_author_last_name.
 ## #########################################################################
 
 
@@ -48,21 +50,20 @@ def main() -> None:
         drop_jr
     )
 
-    # Step 4. If openalex_raw_author_names has "," in it, it means openalex_raw_author_names stores last name first, and then first name, you need to reverse it.
+    # Step 5. If openalex_raw_author_names has "," in it, it means openalex_raw_author_names stores last name first, and then first name, you need to reverse it.
     author_rows[OPENALEX_RAW_AUTHOR_COLUMN] = author_rows[OPENALEX_RAW_AUTHOR_COLUMN].apply(
         reverse_comma_name
     )
 
-    # Step 5. Split first name and last name, also calculate the length of first and last name.
-    author_rows = add_first_last_name_columns(author_rows)
-
-    # Step 6. For these two (ALVAREZ F. E., ALVAREZ F), it should be F. E. ALVAREZ; Jomo K S should be K S Jomo; Juan R. A. Bobenrieth H. should be Juan R. A. Bobenrieth; Amit G should be G Amit; LIPPI F should be F LIPPI; Eugenio S. A. Bobenrieth H. should be Eugenio S. A. Bobenrieth.
+    # Step 6. For these two (ALVAREZ F. E., ALVAREZ F), it should be F. E. ALVAREZ; Jomo K S should be Jomo KS; Amit G should be G Amit, LIPPI F should be F LIPPI.
     author_rows[OPENALEX_RAW_AUTHOR_COLUMN] = author_rows[OPENALEX_RAW_AUTHOR_COLUMN].apply(
         apply_manual_author_corrections
     )
+
+    # Step 7. Split first name and last name, also calculate the length of first and last name.
     author_rows = add_first_last_name_columns(author_rows)
 
-    # Step 7. If openalex_raw_author_first_name has only 1 single letter, then take the second sequence in openalex_raw_author_names. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as openalex_raw_author_first_name.
+    # Step 8. If openalex_raw_author_first_name has only 1 single letter, then take the second sequence in openalex_raw_author_names. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as openalex_raw_author_first_name.
     author_rows["openalex_raw_author_first_name"] = author_rows.apply(
         lambda row: replace_single_letter_first_name(
             row[OPENALEX_RAW_AUTHOR_COLUMN],
@@ -73,6 +74,19 @@ def main() -> None:
     )
     author_rows["openalex_raw_author_first_name_length"] = author_rows[
         "openalex_raw_author_first_name"
+    ].str.len()
+
+    # Step 9. If openalex_raw_author_last_name has only 1 single letter, then take the second to the last sequence in openalex_raw_author_names. If the second to the last sequence is not equal to first name, and the second to the last sequence is not single letter, and take the second to the last sequence as the last name. Otherwise keep the original single letter as openalex_raw_author_last_name.
+    author_rows["openalex_raw_author_last_name"] = author_rows.apply(
+        lambda row: replace_single_letter_last_name(
+            row[OPENALEX_RAW_AUTHOR_COLUMN],
+            row["openalex_raw_author_first_name"],
+            row["openalex_raw_author_last_name"],
+        ),
+        axis=1,
+    )
+    author_rows["openalex_raw_author_last_name_length"] = author_rows[
+        "openalex_raw_author_last_name"
     ].str.len()
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -144,11 +158,9 @@ def apply_manual_author_corrections(name: object) -> str:
     corrections = {
         "ALVAREZ F. E.": "F. E. ALVAREZ",
         "ALVAREZ F": "F. E. ALVAREZ",
-        "Jomo K S": "K S Jomo",
-        "Juan R. A. Bobenrieth H.": "Juan R. A. Bobenrieth",
+        "Jomo K S": "Jomo KS",
         "Amit G": "G Amit",
         "LIPPI F": "F LIPPI",
-        "Eugenio S. A. Bobenrieth H.": "Eugenio S. A. Bobenrieth",
     }
     return corrections.get(text, text)
 
@@ -179,6 +191,24 @@ def replace_single_letter_first_name(author: object, first_name: str, last_name:
     if len(second_sequence) == 1:
         return first_name
     return second_sequence
+
+
+def replace_single_letter_last_name(author: object, first_name: str, last_name: str) -> str:
+    if len(last_name) != 1:
+        return last_name
+
+    parts = clean_text(author).split()
+    if len(parts) < 2:
+        return last_name
+
+    second_to_last_sequence = clean_name_part(parts[-2])
+    if not second_to_last_sequence:
+        return last_name
+    if second_to_last_sequence == first_name:
+        return last_name
+    if len(second_to_last_sequence) == 1:
+        return last_name
+    return second_to_last_sequence
 
 
 def split_first_last_name(name: object) -> tuple[str, str]:

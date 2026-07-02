@@ -22,9 +22,9 @@ OPENALEX_AUTHOR_COLUMN = "openalex_authors"
 # Step 2. Convert openalex_authors to ASCII.
 # Step 3. Splits openalex_authors by semicolon “;”, so one paper with multiple authors becomes multiple author rows.
 # Step 4. If openalex_authors has “,” in it, it means openalex_authors stores last name first, and then first name, you need to reverse it
-# Step 5. Split first name and last name, also calculate the length of  first and last name
-# Step 6. For these two (ALVAREZ F. E., ALVAREZ F) , it should be F. E. ALVAREZ ; for Li Guo, it should be Guo Li
-# Step 7. If openalex_author_first_name has only 1 single letter, then take the second sequence  in openalex_authors. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence a
+# Step 5. For these two (ALVAREZ F. E., ALVAREZ F) , it should be F. E. ALVAREZ ; for Li Guo, it should be Guo Li; LIPPI F should be F LIPPI; K S Jomo should be Jomo KS; Professor Wenhao Li should be Wenhao Li
+# Step 6. Split first name and last name, also calculate the length of  first and last name
+# Step 7. If openalex_author_first_name has only 1 single letter, then take the second sequence in openalex_authors. If the second sequence is not equal to last name, and the second sequence is not single letter, then take the second sequence as the first name. Otherwise keep the original single letter as openalex_author_first_name.
 ## #########################################################################
 
 
@@ -70,11 +70,10 @@ def split_openalex_authors(data: pd.DataFrame) -> pd.DataFrame:
             # Step 4. If openalex_authors has "," in it, it means openalex_authors stores last name first, and then first name, you need to reverse it.
             author = reverse_comma_name(author)
 
-            # Step 5. Split first name and last name, also calculate the length of first and last name.
-            first_name, last_name = split_first_last_name(author)
-
-            # Step 6. For these two (ALVAREZ F. E., ALVAREZ F), it should be F. E. ALVAREZ; for Li Guo, it should be Guo Li.
+            # Step 5. For these two (ALVAREZ F. E., ALVAREZ F), it should be F. E. ALVAREZ; for Li Guo, it should be Guo Li; LIPPI F should be F LIPPI; K S Jomo should be Jomo KS.
             author = apply_manual_author_corrections(author)
+
+            # Step 6. Split first name and last name, also calculate the length of first and last name.
             first_name, last_name = split_first_last_name(author)
 
             # Step 7. If openalex_author_first_name has only 1 single letter, then take the second sequence in openalex_authors. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as openalex_author_first_name.
@@ -129,6 +128,8 @@ def apply_manual_author_corrections(name: object) -> str:
         "ALVAREZ F. E.": "F. E. ALVAREZ",
         "ALVAREZ F": "F. E. ALVAREZ",
         "Li Guo": "Guo Li",
+        "LIPPI F": "F LIPPI",
+        "K S Jomo": "Jomo KS",
     }
     return corrections.get(text, text)
 

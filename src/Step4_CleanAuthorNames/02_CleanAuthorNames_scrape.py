@@ -15,9 +15,6 @@ OUTPUT_AUTHOR_CSV = OUTPUT_DIR / "JEL_Training_Data_Scrape_AuthorRows.csv"
 
 SCRAPE_AUTHOR_COLUMN = "scrape_authors"
 
-
-
-
 ## #########################################################################
 # In 02_CleanAuthorNames_scrape.py, do the following steps only
 #
@@ -25,9 +22,15 @@ SCRAPE_AUTHOR_COLUMN = "scrape_authors"
 # Step 2. Convert scrape_authors to ASCII.
 # Step 3. Splits scrape_authors by semicolon “;”, so one paper with multiple authors becomes multiple author rows.
 
-# For the following list,  Png I. P. L. Should be  I. P. L. Png, Chari V. V. Should be V. V. Chari , Vinod H. D. Should be  H. D. Vinod,  Levitt S.  Should be S. Levitt  , Goeree K. Should be  K. Goeree, Gitter J. Should be J. Gitter , Kothari S. P. Should be S. P. Kothari , Groseclose T. Should be T. Groseclose, Srinivasan T. N. Should be T. N. Srinivasan, McCullough B. D. Should be  B. D. McCullough.
+# For the following list,  Png I. P. L. Should be  I. P. L. Png, Chari V. V. Should be V. V. Chari ,
+# Vinod H. D. Should be  H. D. Vinod,  Levitt S.  Should be S. Levitt  , Goeree K. Should be  K. Goeree,
+# Gitter J. Should be J. Gitter , Kothari S. P. Should be S. P. Kothari , Groseclose T. Should be T. Groseclose,
+# Srinivasan T. N. Should be T. N. Srinivasan, McCullough B. D. Should be  B. D. McCullough.
+# Li Wenli should be Wenli Li
 
 # Step 4. If scrape_authors has “,” in it, it means scrape_authors stores last name first, and then first name, you need to reverse it
+# Bartel Ann should be Ann Bartel; Somerville R.A. should be R.A. Somerville
+
 # Step 5. Split first name and last name, also calculate the length of  first and last name
 #
 # Step 6. If aea_author_first_name has only 1 single letter, then take the second sequence in aea_authors. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as aea_author_first_name.
@@ -137,6 +140,8 @@ def apply_manual_author_corrections(name: object) -> str:
         "Groseclose T.": "T. Groseclose",
         "Srinivasan T. N.": "T. N. Srinivasan",
         "McCullough B. D.": "B. D. McCullough",
+        "Bartel Ann": "Ann Bartel",
+        "Somerville R.A.": "R.A. Somerville",
     }
     return corrections.get(text, text)
 

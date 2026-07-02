@@ -22,7 +22,8 @@ AEA_AUTHOR_COLUMN = "aea_authors"
 # Step 1. from OpenAlex_Crossref_Webscrape_NBER_Repec_AEA_Merged.csv, only take doi_full and aea_authors.
 # Step 2. Convert aea_authors to ASCII.
 # Step 3. Splits aea_authors by semicolon ";", so one paper with multiple authors becomes multiple author rows.
-#
+# Li Wenli should be Wenli Li
+
 # Step 4. Split first name and last name, also calculate the length of first and last name.
 #
 # Step 5. If aea_author_first_name has only 1 single letter, then take the second sequence in aea_authors. If the second sequence is not equal to last name, and the second sequence is not single letter, and take the second sequence as the first name. Otherwise keep the original single letter as aea_author_first_name.

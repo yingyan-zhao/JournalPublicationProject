@@ -191,6 +191,12 @@ NONPAPER_TITLE_PATTERNS = [
     "John Bates Clark Medalist",
 ]
 
+DROP_CROSSREF_AUTHORS = {
+    "Opportunity Insights Team",
+    "Oregon Health Study Group",
+    "the Seminar Dynamics Collective",
+}
+
 
 
 COALESCED_SOURCE_COLUMNS = [
@@ -298,6 +304,11 @@ def clean_all_data(data: pd.DataFrame) -> pd.DataFrame:
     cleaned = drop_correction_titles(cleaned)
     dropped_nonpapers = before_nonpapers - len(cleaned)
     print(f"  Dropped non-paper title rows: {dropped_nonpapers}")
+
+    before_crossref_author_groups = len(cleaned)
+    cleaned = drop_crossref_author_groups(cleaned)
+    dropped_crossref_author_groups = before_crossref_author_groups - len(cleaned)
+    print(f"  Dropped Crossref author group rows: {dropped_crossref_author_groups}")
     return cleaned
 
 
@@ -475,6 +486,18 @@ def drop_correction_titles(data: pd.DataFrame) -> pd.DataFrame:
         return data.copy()
     correction_title = data["title"].fillna("").astype(str).apply(is_nonpaper_title)
     return data.loc[~correction_title].copy()
+
+
+def drop_crossref_author_groups(data: pd.DataFrame) -> pd.DataFrame:
+    if "crossref_authors" not in data.columns:
+        return data.copy()
+    drop_rows = data["crossref_authors"].apply(has_dropped_crossref_author)
+    return data.loc[~drop_rows].copy()
+
+
+def has_dropped_crossref_author(value: Any) -> bool:
+    authors = [clean_text(author) for author in str(value or "").split(";")]
+    return any(author in DROP_CROSSREF_AUTHORS for author in authors)
 
 
 def normalize_title(value: Any) -> str:

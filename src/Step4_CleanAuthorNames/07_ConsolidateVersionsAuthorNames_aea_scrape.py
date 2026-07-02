@@ -1,0 +1,196 @@
+from pathlib import Path
+import os
+import re
+
+import pandas as pd
+
+
+os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
+
+INPUT_DIR = Path("data/processed/author_names")
+AEA_INPUT_CSV = INPUT_DIR / "JEL_Training_Data_AEA_AuthorRows.csv"
+SCRAPE_INPUT_CSV = INPUT_DIR / "JEL_Training_Data_Scrape_AuthorRows.csv"
+OUTPUT_CSV = INPUT_DIR / "JEL_Training_Data_AEA_Scrape_AuthorRows_Merged.csv"
+
+
+## #########################################################################
+# In 07_ConsolidateVersionsAuthorNames_aea_scrape.py, consolidate different versions of author names, by doing the following steps only
+#
+# Step 1. Merge JEL_Training_Data_AEA_AuthorRows.csv and JEL_Training_Data_Scrape_AuthorRows.csv by doi_full and last name and first name.
+# For the unmatched records, merge by doi_full and last name. Then, Keep all matched and unmatched observations.
+# Step 2. Generate a new column aea_scrape_last_name which consolidates aea_last_name and scrape_last_name. Generate a new column aea_scrape_first_name which consolidates aea_first_name and scrape_first_name.
+# Step 3. Export as "JEL_Training_Data_AEA_Scrape_AuthorRows_Merged.csv" and keep only doi_full aea_scrape_last_name aea_scrape_first_name aea_authors scrape_authors
+## #########################################################################
+
+
+def main() -> None:
+    aea = read_author_data(AEA_INPUT_CSV)
+    scrape = read_author_data(SCRAPE_INPUT_CSV)
+
+    aea = add_merge_keys(
+        aea,
+        first_name_column="aea_author_first_name",
+        last_name_column="aea_author_last_name",
+        first_name_key_column="aea_merge_first_name",
+    )
+    scrape = add_merge_keys(
+        scrape,
+        first_name_column="scrape_author_first_name",
+        last_name_column="scrape_author_last_name",
+        first_name_key_column="scrape_merge_first_name",
+    )
+
+    merged = merge_aea_with_scrape(aea, scrape)
+    merged = add_aea_scrape_author_name_columns(merged)
+    output = keep_output_columns(merged)
+
+    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    output.to_csv(OUTPUT_CSV, index=False)
+
+    print("AEA/scrape author-name consolidation summary:")
+    print(f"  AEA input CSV: {AEA_INPUT_CSV}")
+    print(f"  AEA rows: {len(aea)}")
+    print(f"  Scrape input CSV: {SCRAPE_INPUT_CSV}")
+    print(f"  Scrape rows: {len(scrape)}")
+    print(f"  Output CSV: {OUTPUT_CSV}")
+    print(f"  Output rows: {len(output)}")
+    print_match_counts(merged)
+    print_match_strategy_counts(merged)
+
+
+def read_author_data(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing input CSV: {path}")
+    return pd.read_csv(path, dtype=str).fillna("")
+
+
+def add_merge_keys(
+    data: pd.DataFrame,
+    first_name_column: str,
+    last_name_column: str,
+    first_name_key_column: str,
+) -> pd.DataFrame:
+    required_columns = ["doi_full", first_name_column, last_name_column]
+    missing_columns = [column for column in required_columns if column not in data.columns]
+    if missing_columns:
+        raise ValueError(f"Missing columns in author data: {missing_columns}")
+
+    data = data.copy()
+    data[first_name_key_column] = data[first_name_column].apply(normalize_name_key)
+    data["merge_last_name"] = data[last_name_column].apply(normalize_name_key)
+    return data
+
+
+def normalize_name_key(value: object) -> str:
+    if pd.isna(value):
+        return ""
+    text = str(value).lower().strip()
+    return re.sub(r"[^a-z0-9]", "", text)
+
+
+def merge_aea_with_scrape(aea: pd.DataFrame, scrape: pd.DataFrame) -> pd.DataFrame:
+    first_pass = aea.merge(
+        scrape,
+        left_on=["doi_full", "merge_last_name", "aea_merge_first_name"],
+        right_on=["doi_full", "merge_last_name", "scrape_merge_first_name"],
+        how="outer",
+        indicator="first_pass_match_status",
+    )
+    first_pass["first_pass_match_status"] = first_pass[
+        "first_pass_match_status"
+    ].astype(str)
+
+    matched_first_pass = first_pass.loc[
+        first_pass["first_pass_match_status"].eq("both")
+    ].copy()
+    matched_first_pass["aea_scrape_match_status"] = "both"
+    matched_first_pass["aea_scrape_match_strategy"] = "doi_last_first_name"
+
+    unmatched_aea = first_pass.loc[
+        first_pass["first_pass_match_status"].eq("left_only"), aea.columns
+    ].copy()
+    unmatched_scrape = first_pass.loc[
+        first_pass["first_pass_match_status"].eq("right_only"), scrape.columns
+    ].copy()
+
+    second_pass = unmatched_aea.merge(
+        unmatched_scrape,
+        on=["doi_full", "merge_last_name"],
+        how="outer",
+        indicator="second_pass_match_status",
+    )
+    second_pass["second_pass_match_status"] = second_pass[
+        "second_pass_match_status"
+    ].astype(str)
+    second_pass["aea_scrape_match_status"] = second_pass["second_pass_match_status"]
+    second_pass["aea_scrape_match_strategy"] = second_pass[
+        "second_pass_match_status"
+    ].map(
+        {
+            "both": "doi_last_name",
+            "left_only": "aea_only",
+            "right_only": "scrape_only",
+        }
+    )
+
+    matched_first_pass = matched_first_pass.drop(columns=["first_pass_match_status"])
+    second_pass = second_pass.drop(columns=["second_pass_match_status"])
+    return pd.concat([matched_first_pass, second_pass], ignore_index=True, sort=False)
+
+
+def add_aea_scrape_author_name_columns(data: pd.DataFrame) -> pd.DataFrame:
+    data = data.copy()
+    data["aea_scrape_last_name"] = coalesce_columns(
+        data,
+        ["aea_author_last_name", "scrape_author_last_name"],
+    )
+    data["aea_scrape_first_name"] = coalesce_columns(
+        data,
+        ["aea_author_first_name", "scrape_author_first_name"],
+    )
+    return data
+
+
+def keep_output_columns(data: pd.DataFrame) -> pd.DataFrame:
+    columns = [
+        "doi_full",
+        "aea_scrape_last_name",
+        "aea_scrape_first_name",
+        "aea_authors",
+        "scrape_authors",
+    ]
+    missing_columns = [column for column in columns if column not in data.columns]
+    if missing_columns:
+        raise ValueError(f"Missing columns in merged author data: {missing_columns}")
+    return data[columns].copy()
+
+
+def coalesce_columns(data: pd.DataFrame, columns: list[str]) -> pd.Series:
+    values = pd.Series([""] * len(data), index=data.index)
+    for column in columns:
+        if column not in data.columns:
+            continue
+        candidate = data[column].fillna("").astype(str).str.strip()
+        values = values.mask(values.eq(""), candidate)
+    return values
+
+
+def print_match_counts(data: pd.DataFrame) -> None:
+    counts = data["aea_scrape_match_status"].value_counts().to_dict()
+    print("  Match counts:")
+    print(f"    matched: {counts.get('both', 0)}")
+    print(f"    only in AEA: {counts.get('left_only', 0)}")
+    print(f"    only in scrape: {counts.get('right_only', 0)}")
+
+
+def print_match_strategy_counts(data: pd.DataFrame) -> None:
+    counts = data["aea_scrape_match_strategy"].value_counts().to_dict()
+    print("  Match strategy counts:")
+    print(f"    matched by doi + last + first: {counts.get('doi_last_first_name', 0)}")
+    print(f"    matched by doi + last: {counts.get('doi_last_name', 0)}")
+    print(f"    only in AEA: {counts.get('aea_only', 0)}")
+    print(f"    only in scrape: {counts.get('scrape_only', 0)}")
+
+
+if __name__ == "__main__":
+    main()

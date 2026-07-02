@@ -9,7 +9,7 @@ STEP_DIR = PROJECT_ROOT / "src" / "Step2_MergeAllDatasets"
 SCRIPTS_TO_RUN = [
     STEP_DIR / "01_Merge_OpenAlexCrossrefWebscrape_nber.py",
     STEP_DIR / "02_Merge_OpenAlexCrossrefWebscrape_nber_repec.py",
-    STEP_DIR / "03_Merge_OpenAlexCrossrefWebsrape_nber_repec_aea.py",
+    STEP_DIR / "03_Merge_OpenAlexCrossrefWebscrape_nber_repec_aea.py",
 ]
 
 
