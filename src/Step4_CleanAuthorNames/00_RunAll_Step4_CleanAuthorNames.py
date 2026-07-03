@@ -18,6 +18,7 @@ SCRIPTS_TO_RUN = [
     STEP_DIR / "09_ConsolidateVersionsAuthorNames_crossref_crossrefFamilyGivenNames.py",
     STEP_DIR / "10_ConsolidateVersionsAuthorNames_aea_scrape_openalex.py",
     STEP_DIR / "11_ConsolidateVersionsAuthorNames_aea_scrape_openalex_crossref.py",
+    STEP_DIR / "12_CreateAuthorID.py",
 ]
 
 

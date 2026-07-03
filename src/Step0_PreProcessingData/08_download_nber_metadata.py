@@ -17,7 +17,7 @@ NBER_TSV_BASE_URL = "https://data.nber.org/nber_paper_chapter_metadata/tsv"
 NBER_CSV_BASE_URL = "https://data.nber.org/nber_paper_chapter_metadata/csv"
 RAW_DIR = Path("data/raw/nber_metadata")
 OUTPUT_CSV = Path("data/raw_csv/NBER_Working_Papers_Metadata_After1995.csv")
-FROM_YEAR = 1995
+FROM_YEAR = 1950
 
 TSV_FILES = {
     "ref": "ref.tsv",

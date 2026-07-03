@@ -13,7 +13,7 @@ INPUT_DIR = Path(
 )
 OUTPUT_DIR = Path("data/raw_csv/repec_by_year")
 REDIF_SUFFIXES = {".rdf", ".redif"}
-MIN_YEAR = 2000
+MIN_YEAR = 1950
 MAX_YEAR = 2026
 
 REPEC_FIELDS_TO_KEEP = [

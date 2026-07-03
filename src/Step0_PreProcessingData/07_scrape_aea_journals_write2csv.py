@@ -17,6 +17,7 @@ os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
 BASE_URL = "https://www.aeaweb.org"
 OUTPUT_CSV = Path("data/raw_csv/AEA_Journals_Papers.csv")
+DEFAULT_FROM_YEAR = 1950
 
 AEA_JOURNALS = {
     "aer": {
@@ -219,7 +220,12 @@ def parse_args() -> argparse.Namespace:
         choices=list(AEA_JOURNALS),
         help="Journal slugs to scrape.",
     )
-    parser.add_argument("--from-year", type=int, help="Keep issues from this year or later.")
+    parser.add_argument(
+        "--from-year",
+        type=int,
+        default=DEFAULT_FROM_YEAR,
+        help="Keep issues from this year or later.",
+    )
     parser.add_argument("--to-year", type=int, help="Keep issues from this year or earlier.")
     parser.add_argument("--limit-issues", type=int, help="Limit issues per journal for testing.")
     parser.add_argument("--limit-articles", type=int, help="Limit total article rows written for testing.")

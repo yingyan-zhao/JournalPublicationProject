@@ -15,7 +15,7 @@ from top_journals import TOP_FIVE_JOURNALS
 CROSSREF_WORKS_URL = "https://api.crossref.org/journals/{issn}/works"
 OUTPUT_JSONL = Path("data/raw/Crossref_FullData_Jsonl.jsonl")
 OUTPUT_CSV = Path("data/processed/Crossref_FullData_CSV.csv")
-FROM_YEAR = 2000
+FROM_YEAR = 1950
 TO_YEAR = 2026
 CROSSREF_ROWS_PER_PAGE = 1000
 
