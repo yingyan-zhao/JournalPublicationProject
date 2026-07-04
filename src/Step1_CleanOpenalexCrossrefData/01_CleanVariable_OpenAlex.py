@@ -25,6 +25,18 @@ OPENALEX_IDS_TO_DROP = {
     "https://openalex.org/W4253097040",
     "https://openalex.org/W4239194262"
 }
+OPENALEX_EXACT_TITLES_TO_DROP = {
+    "Index",
+    "Announcement",
+    "Back Matter",
+    "Editorial",
+    "Editorial Board",
+    "Masthead",
+    "Notice",
+    "Travel Fund",
+    "Introduction",
+    "Prefatory Note"
+}
 OPENALEX_UNION_COLUMNS_FOR_DUPLICATES = [
     "openalex_primary_domain",
     "openalex_primary_field",
@@ -67,6 +79,44 @@ OPENALEX_COLUMNS = [
     "_query_issn",
 ]
 
+## ##############################################################################################################
+# [01_CleanVariable_OpenAlex.py] the code does this:
+# 1. Reads raw OpenAlex data Input: data/raw_csv/OpenAlex_Works.csv
+# 2. Keeps selected OpenAlex variables It keeps columns such as id, doi, title, display_name, publication year/date, authors, institutions, keywords, concepts, topics, abstract, citation count, journal name, and ISSN.
+# 3. Drops known problematic OpenAlex IDs It removes a manually specified list of OpenAlex records.
+# 4. Drops records with no title information If both title and display_name are blank, the record is dropped.
+# 5. Cleans title If title is blank, it uses display_name. Then it drops display_name.
+# 6. Drops non-paper or irrelevant titles It removes titles containing phrases like corrections, errata, editor introductions, reports, front matter, referee acknowledgments, announcements, book reviews, submission notices, and other recurring non-research-paper items.
+# 7. Drops exact non-paper titles It drops exact titles in OPENALEX_EXACT_TITLES_TO_DROP
+# 8. Normalizes title text It keeps only letters and numbers in the title, replacing other characters with spaces.
+# 9. Applies one manual title correction If title is "Human Capital and Growth" and publication year is 2015, it changes the title to "Human Capital and Growth 2015".
+# 10. Drops records whose cleaned title is blank.
+# 11. Tags duplicated titles It creates tag = 1 for duplicated titles and tag = 0 otherwise.
+# 12. Drops duplicated-title rows with blank authors If a title is duplicated and the author field is blank, that row is removed.
+# 13. For remaining duplicated titles, keeps the longer institution string For author_institutions, duplicated title records take the longest available version.
+# 14. Renames title title becomes openalex_title.
+# 15. Cleans DOI It removes DOI URL prefixes like https://doi.org/.
+# 16. Cleans publication year/date It drops publication_date and renames publication_year to openalex_publication_year.
+# 17. Reconstructs abstract It converts abstract_inverted_index into normal readable abstract text.
+# 18. Extracts JEL codes from abstract If the abstract contains JEL codes, it stores them in jel_codes.
+# 19. Cleans abstract It removes HTML entities, HTML tags, and JEL-code text from the abstract.
+# 20. For duplicated titles, keeps the longest abstract and JEL-code string.
+# 21. Drops abstract_inverted_index.
+# 22. Cleans citation information It drops counts_by_year and renames cited_by_count to openalex_cited_by_count.
+# 23. Renames journal variables _query_journal becomes openalex_journalname. _query_issn becomes openalex_journalissn.
+# 24. Extracts topic hierarchy From primary_topic, it creates: openalex_primary_domain, openalex_primary_field, openalex_primary_subfield, and openalex_primary_topic.
+# 25. Cleans keywords From OpenAlex keywords, it creates: openalex_keywords and openalex_top3_keywords.
+# 26. Cleans concepts From OpenAlex concepts, it creates: openalex_concepts, openalex_top3_concepts, and openalex_level0_concepts.
+# 27. For duplicated titles, unions topic/keyword/concept information For duplicated records, it combines information across versions rather than keeping only one version.
+# 28. Drops raw nested OpenAlex fields It drops primary_topic, keywords, concepts, and topics.
+# 29. Creates DOI version columns For each title, it creates openalex_doi_1, openalex_doi_2, etc., storing different DOI versions.
+# 30. Keeps one row per duplicated title After preserving useful duplicate information, it keeps one observation per title.
+# 31. Adds openalex_ prefix to remaining variables.
+# 32. Drops intermediate columns It drops openalex_doi and openalex_tag.
+# 33. Exports cleaned data Output: data/processed/OpenAlex_Works_Cleaned.csv
+# 34. Prints summary diagnostics It reports rows read/written, rows with abstract, rows with JEL codes in abstract, duplicated DOI counts, and duplicated title counts.
+## ##############################################################################################################
+
 
 def main() -> None:
     if not INPUT_CSV_OpenAlex.exists():
@@ -98,6 +148,7 @@ def clean_openalex_data(openalex: pd.DataFrame) -> pd.DataFrame:
     openalex_selected["title"] = openalex_selected["title"].fillna(openalex_selected["display_name"])
     openalex_selected = openalex_selected.drop(columns=["display_name"])
     openalex_selected = drop_correction_titles(openalex_selected)
+    openalex_selected = drop_exact_titles(openalex_selected, OPENALEX_EXACT_TITLES_TO_DROP)
     openalex_selected["title"] = openalex_selected["title"].apply(clean_title)
     openalex_selected = rename_specific_openalex_titles(openalex_selected)
     openalex_selected = drop_blank_cleaned_titles(openalex_selected)
@@ -194,6 +245,11 @@ def drop_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
         if column in data.columns
     ]
     return data.drop(columns=columns_to_drop).copy()
+
+
+def drop_exact_titles(data: pd.DataFrame, titles_to_drop: set[str]) -> pd.DataFrame:
+    titles = data["title"].fillna("").astype(str).str.strip()
+    return data.loc[~titles.isin(titles_to_drop)].copy()
 
 
 def drop_openalex_ids(data: pd.DataFrame, openalex_ids: set[str]) -> pd.DataFrame:
@@ -600,7 +656,9 @@ def drop_correction_titles(data: pd.DataFrame) -> pd.DataFrame:
         "Behavior of the Firm Under Regulatory Constraint",
         "Auditors Report Audited Financial Statements",
         "INDEPENDENT AUDITOR S REPORT",
-        "John Bates Clark Medalist"
+        "John Bates Clark Medalist",
+        "A PHENOMENOLOGICAL STUDY OF TEACHING ROLE PERCEPTIONS OF COLLEGE AND UNIVERSITY PROFESSORS",
+        "International Bibliography of Economics"
     ]
 
     pattern = "|".join(re.escape(phrase) for phrase in correction_patterns)

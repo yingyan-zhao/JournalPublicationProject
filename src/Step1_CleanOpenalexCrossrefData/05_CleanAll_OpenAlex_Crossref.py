@@ -12,6 +12,47 @@ os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 INPUT_CSV = Path("data/processed/OpenAlex_Crossref_All_Webscraped.csv")
 OUTPUT_CSV = Path("data/processed/OpenAlex_Crossref_All_Webscraped_Cleaned.csv")
 
+## ##############################################################################################################
+# [05_CleanAll_OpenAlex_Crossref.py] the code does this:
+# Step 1. Reads input data. Input: data/processed/OpenAlex_Crossref_All_Webscraped.csv
+# Step 2. Cleans DOI values. It lowercases DOI, removes DOI URL prefixes, and removes trailing punctuation.
+# Step 3. Removes duplicate DOI values within each row.
+# Step 4. Creates doi_list. It combines DOI information from doi, openalex_doi_1,
+# openalex_doi_2, openalex_doi_3, crossref_doi_1, crossref_doi_2,
+# crossref_doi_3, and scrape_doi. The final doi_list stores unique DOI values
+# separated by ";".
+# Step 5. Creates DOI version columns. From doi_list, it creates doi_1, doi_2,
+# doi_3, etc.
+# Step 6. Builds cleaned journalname. It takes the first nonblank value from
+# journalname, scrape_journalname, openalex_journalname, and crossref_journalname.
+# Step 7. Builds cleaned journalissn. It takes openalex_journalissn; if blank, it
+# takes crossref_journalissn.
+# Step 8. Builds cleaned publication_year. It takes openalex_publication_year; if
+# blank, it takes crossref_published_year.
+# Step 9. Builds cleaned title. It takes the first nonblank value from title,
+# scrape_title, openalex_title, and crossref_title.
+# Step 10. Cleans title text. It removes endings such as Available for Purchase,
+# Open Access, and trailing *.
+# Step 11. Builds cleaned abstract. It takes scrape_abstract; if blank,
+# openalex_abstract; if still blank, crossref_abstract.
+# Step 12. Builds cleaned jel_codes. It takes scrape_jel_codes; if blank,
+# openalex_jel_codes; if still blank, crossref_jel_codes.
+# Step 13. Renames scrape JEL context. scrape_jel_context becomes jel_context.
+# Step 14. Drops many intermediate/source columns. It drops merge fields, original
+# DOI fields, OpenAlex technical columns, Crossref technical columns, scrape
+# URL/status/error fields, and source columns already combined into cleaned variables.
+# Step 15. Drops non-paper title rows. It removes rows whose cleaned title contains
+# phrases in NONPAPER_TITLE_PATTERNS.
+# Step 16. Drops selected Crossref author group rows. It drops rows where
+# crossref_authors contains Opportunity Insights Team, Oregon Health Study Group,
+# or the Seminar Dynamics Collective.
+# Step 17. Prints cleaning summary. It reports input rows, output rows, rows with
+# DOI list, number of DOI version columns, rows with abstract, rows with JEL codes,
+# duplicated title rows, and duplicated doi_list rows.
+# Step 18. Exports cleaned data. Output:
+# data/processed/OpenAlex_Crossref_All_Webscraped_Cleaned.csv
+## ##############################################################################################################
+
 DROP_COLUMNS = [
     "record_status",
     "match_strategy",
@@ -188,7 +229,10 @@ NONPAPER_TITLE_PATTERNS = [
     "Independent Auditor s Report",
     "Behavior of the Firm Under Regulatory Constraint",
     "Auditors Report Audited Financial Statements",
+    "INDEPENDENT AUDITOR S REPORT",
     "John Bates Clark Medalist",
+    "A PHENOMENOLOGICAL STUDY OF TEACHING ROLE PERCEPTIONS OF COLLEGE AND UNIVERSITY PROFESSORS",
+    "International Bibliography of Economics"
 ]
 
 DROP_CROSSREF_AUTHORS = {
@@ -229,6 +273,27 @@ DOI_LIST_COLUMNS = [
     "scrape_doi",
 ]
 
+## ##############################################################################################
+# In [05_CleanAll_OpenAlex_Crossref.py], Step by step, it does this:
+# Step 1. Reads input data Input: data/processed/OpenAlex_Crossref_All_Webscraped.csv
+# Step 2. Cleans DOI values. It lowercases DOI, removes DOI URL prefixes, and removes trailing punctuation.
+# Step 3. Removes duplicate DOI values within each row
+# Step 4. Creates doi_list: It combines DOI information from: doi, openalex_doi_1, openalex_doi_2, openalex_doi_3, crossref_doi_1, crossref_doi_2, crossref_doi_3, and scrape_doi. The final doi_list stores unique DOI values separated by “;”
+# Step 5. Creates DOI version columns From doi_list, it creates doi_1, doi_2, doi_3, etc.
+# Step 6. Builds cleaned journalname. It takes the first nonblank value from: journalname, scrape_journalname, openalex_journalname, crossref_journalname.
+# Step 7. Builds cleaned journalissn: It takes openalex_journalissn; if blank, it takes crossref_journalissn.
+# Step 8. Builds cleaned publication_year: It takes openalex_publication_year; if blank, it takes crossref_published_year.
+# Step 9. Builds cleaned title: It takes the first nonblank value from: title, scrape_title, openalex_title, crossref_title.
+# Step 10. Cleans title text: It removes endings such as Available for Purchase, Open Access, and trailing *.
+# Step 11. Builds cleaned abstract: It takes scrape_abstract; if blank, openalex_abstract; if still blank, crossref_abstract.
+# Step 12. Builds cleaned jel_codes: It takes scrape_jel_codes; if blank, openalex_jel_codes; if still blank, crossref_jel_codes.
+# Step 13. Renames scrape JEL context: scrape_jel_context becomes jel_context.
+# Step 14. Drops many intermediate/source columns : It drops merge fields, original DOI fields, OpenAlex technical columns, Crossref technical columns, scrape URL/status/error fields, and source columns already combined into cleaned variables.
+# Step 15. Drops non-paper title rows: It removes rows whose cleaned title contains phrases in NONPAPER_TITLE_PATTERNS
+# Step 16. Drops selected Crossref author group rows. It drops rows where crossref_authors contains: Opportunity Insights Team, Oregon Health Study Group, or the Seminar Dynamics Collective.
+# Step 17. Prints cleaning summary It reports input rows, output rows, rows with DOI list, number of DOI version columns, rows with abstract, rows with JEL codes, duplicated title rows, and duplicated doi_list rows.
+# Step 18. Exports cleaned data Output: data/processed/OpenAlex_Crossref_All_Webscraped_Cleaned.csv
+## ##############################################################################################
 
 def main() -> None:
     if not INPUT_CSV.exists():

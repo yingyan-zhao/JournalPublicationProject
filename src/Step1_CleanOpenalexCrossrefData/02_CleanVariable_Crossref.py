@@ -30,6 +30,8 @@ CROSSREF_EXACT_TITLES_TO_DROP = {
     "Masthead",
     "Notice",
     "Travel Fund",
+    "Introduction",
+    "Prefatory Note"
 }
 
 CROSSREF_COLUMNS = [
@@ -64,12 +66,38 @@ CROSSREF_COLUMNS = [
     "title",
 ]
 
+## ##############################################################################################################
+# In [02_CleanVariable_Crossref.py], the code does this:
+# 1. Reads raw Crossref data Input: data/raw_csv/Crossref_Works.csv
+# 2. Reads all columns as strings It uses: pd.read_csv(INPUT_CSV_Crossref, dtype=str, low_memory=False) This avoids mixed-type warnings from columns like volume, author IDs, and funder fields.
+# 3. Keeps selected Crossref variables It keeps DOI, publication dates, journal title, publisher, volume, issue, pages, abstract, citation/reference counts, ISSN, URL, authors, author affiliations, collection date, and title.
+# 4. Cleans DOI It removes DOI URL prefixes such as https://doi.org/.
+# 5. Drops manually identified problematic DOIs It removes: 10.1257/aer.97.3.1033, 10.1257/aer.15000025, and 10.1257/aer.108.6.1598.
+# 6. Cleans title from Crossref format Crossref titles may be stored as JSON-like lists. The code takes the first title value.
+# 7. Drops rows with blank title.
+# 8. Drops non-paper or irrelevant title patterns It removes titles containing corrections, errata, editor introductions, reports, front matter, referee acknowledgments, announcements, book reviews, submission notices, and other recurring non-research-paper items.
+# 9. Drops exact non-paper titles It drops exact titles in OPENALEX_EXACT_TITLES_TO_DROP
+# 10. Normalizes title text It keeps only letters and numbers, replacing other characters with spaces.
+# 11. Applies one manual title correction If title is "Human Capital and Growth" and publication year is 2015, it changes the title to "Human Capital and Growth 2015".
+# 12. Drops rows whose cleaned title is blank.
+# 13. Tags duplicated titles It creates tag = 1 for duplicated titles and tag = 0 otherwise.
+# 14. Drops duplicated-title rows with blank authors If title is duplicated and authors is blank, that row is removed.
+# 15. Renames title title becomes crossref_title.
+# 16. Extracts JEL codes from abstract If the abstract contains JEL codes, it stores them in jel_codes.
+# 17. Cleans abstract It removes HTML tags, decodes HTML entities, removes JEL-code text, and collapses extra spaces.
+# 18. For duplicated titles, keeps the longest abstract.
+# 19. For duplicated titles, keeps the longest JEL-code string.
+# 20. For duplicated titles, keeps the longest author-affiliation string.
+# 21. Creates DOI version columns For each title, it creates crossref_doi_1, crossref_doi_2, etc., storing different DOI versions.
+# 22. Keeps one row per duplicated title After preserving useful duplicate information, it keeps one observation per title.
+# 23. Renames journal fields _query_journal becomes crossref_journalname. _query_issn becomes crossref_journalissn.
+## ##############################################################################################################
 
 def main() -> None:
     if not INPUT_CSV_Crossref.exists():
         raise FileNotFoundError(f"{INPUT_CSV_Crossref} does not exist.")
 
-    crossref = pd.read_csv(INPUT_CSV_Crossref)
+    crossref = pd.read_csv(INPUT_CSV_Crossref, dtype=str, low_memory=False)
     crossref_selected = clean_crossref_data(crossref)
 
     OUTPUT_CSV_Crossref.parent.mkdir(parents=True, exist_ok=True)
@@ -580,7 +608,9 @@ def drop_correction_titles(data: pd.DataFrame) -> pd.DataFrame:
         "Behavior of the Firm Under Regulatory Constraint",
         "Auditors Report Audited Financial Statements",
         "INDEPENDENT AUDITOR S REPORT",
-        "John Bates Clark Medalist"
+        "John Bates Clark Medalist",
+        "A PHENOMENOLOGICAL STUDY OF TEACHING ROLE PERCEPTIONS OF COLLEGE AND UNIVERSITY PROFESSORS",
+        "International Bibliography of Economics"
     ]
 
     pattern = "|".join(re.escape(phrase) for phrase in correction_patterns)

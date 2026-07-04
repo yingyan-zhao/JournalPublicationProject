@@ -8,8 +8,7 @@ os.chdir("/Users/yingyan_zhao/Dropbox/JournalPublicationProject")
 
 INPUT_CSV_OpenAlex = Path("data/processed/OpenAlex_Works_Cleaned.csv")
 INPUT_CSV_Crossref = Path("data/processed/Crossref_Works_Cleaned.csv")
-OUTPUT_DIR = Path("data/processed")
-OUTPUT_CSV_All = OUTPUT_DIR / "OpenAlex_Crossref_All.csv"
+OUTPUT_CSV_All = Path("data/processed/OpenAlex_Crossref_All.csv")
 
 OPENALEX_ROW_ID = "_openalex_row_id"
 CROSSREF_ROW_ID = "_crossref_row_id"
@@ -41,6 +40,29 @@ DOI_MATCH_STAGES = [
     ("openalex_doi_3", "crossref_doi_3"),
 ]
 
+## #######################################################################################
+# In [03_Merge_OpenAlex_Crossref.py], does the following two steps only
+# Step 1. Reads cleaned OpenAlex data Input: data/processed/OpenAlex_Works_Cleaned.csv
+# Step 2. Reads cleaned Crossref data Input: data/processed/Crossref_Works_Cleaned.csv
+# Step 3. Normalizes DOI before matching It lowercases DOI and removes prefixes such as: https://doi.org/, http://doi.org/, https://dx.doi.org/, http://dx.doi.org/, and doi:.
+# Step 4. Matches by DOI versions, stage by stage It tries these DOI matches in order: openalex_doi_1 = crossref_doi_1; openalex_doi_1 = crossref_doi_2; openalex_doi_1 = crossref_doi_3; openalex_doi_2 = crossref_doi_1; openalex_doi_2 = crossref_doi_2; openalex_doi_2 = crossref_doi_3; openalex_doi_3 = crossref_doi_1; openalex_doi_3 = crossref_doi_2; openalex_doi_3 = crossref_doi_3
+# Step 5. Matches remaining records by normalized title After DOI matching, it tries to match still-unmatched records by title. Title normalization lowercases the title and keeps only letters/numbers.
+# Step 6. Labels match strategy DOI matches get labels like openalex_doi_1=crossref_doi_1. Title matches get normalized_title_after_doi.
+# Step 7. Keeps all matched and unmatched records The output contains: matched, openalex_only, and crossref_only rows.
+# Step 8. Builds combined DOI doi takes the first nonblank value from: crossref_doi_1, crossref_doi_2, crossref_doi_3, then openalex_doi_1, openalex_doi_2, openalex_doi_3.
+# Step 9. Builds combined journal name journalname takes crossref_journalname; if blank, it takes openalex_journalname.
+# Step 10. Builds combined title title takes crossref_title; if blank, it takes openalex_title.
+# Step 11. Tags duplicated output titles. It creates title_duplicate_tag = 1 if the normalized output title is duplicated.
+# Step 12. Consolidates duplicated titles. For duplicated output titles, it keeps one row and, for each column, keeps the longest text value in that duplicate group.
+# Step 13. Orders output columns. It places key columns first: record_status, match_strategy, doi, journalname, title, title_duplicate_tag, followed by OpenAlex and Crossref variables.
+# Step 14. Drops temporary merge columns. It removes temporary row IDs and merge keys.
+# Step 15. Prints merge summary. It reports input rows, output rows, matched rows, OpenAlex-only rows, Crossref-only rows, rows with combined DOI/title, duplicate DOI/title counts, and matched rows by stage.
+# Step 16. Prints input duplicate DOI counts. It reports duplicate DOI rows for each DOI version column in both OpenAlex and Crossref.
+# Step 17. Writes merged data Output: data/processed/OpenAlex_Crossref_All.csv
+# Step 18. Prints final duplicate check. It reports duplicated DOI rows and duplicated title rows in the final merged dataset.
+# Step 19. Prints actual duplicated DOI values. It now prints the duplicated DOI value and its frequency. In your latest run, the duplicated DOI was:
+## #######################################################################################
+
 
 def main() -> None:
     if not INPUT_CSV_OpenAlex.exists():
@@ -48,15 +70,11 @@ def main() -> None:
     if not INPUT_CSV_Crossref.exists():
         raise FileNotFoundError(f"{INPUT_CSV_Crossref} does not exist.")
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
     openalex = pd.read_csv(INPUT_CSV_OpenAlex, dtype=str, keep_default_na=False)
     crossref = pd.read_csv(INPUT_CSV_Crossref, dtype=str, keep_default_na=False)
 
-    check_required_columns(openalex, OPENALEX_DOI_COLUMNS, "OpenAlex")
-    check_required_columns(crossref, CROSSREF_DOI_COLUMNS, "Crossref")
-    check_required_columns(openalex, [OPENALEX_TITLE], "OpenAlex")
-    check_required_columns(crossref, [CROSSREF_TITLE], "Crossref")
+    check_required_columns(openalex, OPENALEX_DOI_COLUMNS + [OPENALEX_TITLE], "OpenAlex")
+    check_required_columns(crossref, CROSSREF_DOI_COLUMNS + [CROSSREF_TITLE], "Crossref")
 
     all_records, stage_summaries = merge_by_doi_versions(openalex, crossref)
     all_records = add_combined_columns(all_records)
@@ -70,9 +88,10 @@ def main() -> None:
     all_records = order_output_columns(all_records, openalex.columns, crossref.columns)
     all_records = drop_temp_columns(all_records)
 
-    print_merge_summary(openalex, crossref, all_records, stage_summaries)
-
+    OUTPUT_CSV_All.parent.mkdir(parents=True, exist_ok=True)
     all_records.to_csv(OUTPUT_CSV_All, index=False)
+
+    print_merge_summary(openalex, crossref, all_records, stage_summaries)
     print(f"\nWrote all matched and unmatched rows to {OUTPUT_CSV_All}")
     print_final_duplicate_check(all_records)
 
@@ -503,6 +522,19 @@ def duplicate_nonblank_groups(data: pd.DataFrame, column: str, cleaner=normalize
     return int(duplicated_values.nunique())
 
 
+def duplicate_nonblank_value_counts(
+    data: pd.DataFrame,
+    column: str,
+    cleaner=normalize_doi,
+) -> pd.Series:
+    if column not in data.columns:
+        return pd.Series(dtype="int64")
+    values = data[column].apply(cleaner)
+    values = values.loc[values != ""]
+    duplicated_values = values.loc[values.duplicated(keep=False)]
+    return duplicated_values.value_counts().sort_index()
+
+
 def duplicate_nonblank_tag(data: pd.DataFrame, column: str, cleaner=normalize_doi) -> pd.Series:
     if column not in data.columns:
         return pd.Series([0] * len(data), index=data.index)
@@ -569,6 +601,12 @@ def print_merge_summary(
 def print_final_duplicate_check(all_records: pd.DataFrame) -> None:
     print("\nFinal duplicate check:")
     print(f"  Rows with duplicated DOI: {duplicate_nonblank_rows(all_records, 'doi')}")
+    duplicated_dois = duplicate_nonblank_value_counts(all_records, "doi")
+    if duplicated_dois.empty:
+        print("  Duplicated DOI values: none")
+    else:
+        print("  Duplicated DOI values:")
+        print(duplicated_dois.to_string())
     print(
         "  Rows with duplicated title: "
         f"{duplicate_nonblank_rows(all_records, 'title', normalize_title)}"

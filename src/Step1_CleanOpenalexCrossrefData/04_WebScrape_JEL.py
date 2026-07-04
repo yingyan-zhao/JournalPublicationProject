@@ -44,18 +44,13 @@ SCRAPE_OUTPUT_PREFIX = "scrape_"
 OUTPUT_COLUMNS_BASE = [
     "title",
     "doi",
-    "doi_source",
     "journalname",
-    "scrape_url",
-    "final_url",
-    "http_status",
     "authors",
     "author_institutions",
     "publication_year",
     "abstract",
     "keywords",
     "jel_codes",
-    "jel_source",
     "jel_context",
     "scraped_at",
     "error",
@@ -64,6 +59,16 @@ OUTPUT_COLUMNS = [
     column if column.startswith(SCRAPE_OUTPUT_PREFIX) else f"{SCRAPE_OUTPUT_PREFIX}{column}"
     for column in OUTPUT_COLUMNS_BASE
 ]
+
+## ##############################################################################################
+# In [04_WebScrape_JEL.py], do the following.
+# Step 1. Reads data/processed/OpenAlex_Crossref_All.csv.
+# Step 2. Creates scrape output columns if they do not already exist. These include: scrape_title, scrape_doi, scrape_journalname, scrape_authors, scrape_author_institutions, scrape_publication_year, scrape_abstract, scrape_keywords, scrape_jel_codes, scrape_jel_context, scrape_scraped_at, and scrape_error.
+# Step 3. Builds DOI candidates from multiple columns, in order: openalex_doi_1, openalex_doi_2, openalex_doi_3, then crossref_doi_1, crossref_doi_2, crossref_doi_3
+# Step 4. For each selected row, it tries to scrape using each DOI candidate. For each observation, I want to extract Title, Authors, Author institutions, Publication year, Abstract, Keywords, JEL codes
+# Step 5. Writes scraped results back into the same row of the full dataset.
+# Step 6. Exports the updated full dataset to: data/processed/OpenAlex_Crossref_All_Webscraped.csv
+## ##############################################################################################
 
 
 def main() -> None:
@@ -113,11 +118,6 @@ def main() -> None:
             print(f"  Saved progress to {args.output_csv}.")
 
         time.sleep(args.sleep)
-
-    before_year_filter = len(data)
-    data = drop_pre_2000_scraped_publication_year(data)
-    dropped_pre_2000 = before_year_filter - len(data)
-    print(f"Dropped rows with scrape_publication_year before 2000: {dropped_pre_2000}.")
 
     data.to_csv(args.output_csv, index=False)
     print(f"Wrote updated full dataset to {args.output_csv}.")
@@ -180,8 +180,6 @@ def rows_needing_scrape(data: pd.DataFrame, overwrite: bool) -> list[int]:
     rows = []
     for row_index, row in data.iterrows():
         record = scrape_record_from_row(row)
-        if record["journalname"] != "American Economic Review":
-            continue
         if not record["doi_candidates"]:
             continue
         if not overwrite and row_has_scraped_information(row):
