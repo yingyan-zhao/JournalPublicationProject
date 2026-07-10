@@ -350,6 +350,7 @@ def build_training_args(transformers, output_dir: Path, params: dict):
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
         greater_is_better=True,
+        dataloader_pin_memory=False,
         logging_steps=50,
         seed=RANDOM_STATE,
     )
@@ -367,6 +368,7 @@ def build_final_training_args(transformers, output_dir: Path, params: dict):
         weight_decay=params["weight_decay"],
         warmup_ratio=params["warmup_ratio"],
         load_best_model_at_end=False,
+        dataloader_pin_memory=False,
         logging_steps=50,
         seed=RANDOM_STATE,
     )
