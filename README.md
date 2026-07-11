@@ -59,8 +59,10 @@ Identify the change in the pattern of economics publications: Has it become hard
 
 # Main Findings
 # A growing share of papers include top-ranked authors (Author rankings based on publication count over the preceding 20 years)
-<img src="outputs/Graph1_TopAuthorPaperShares_After1980.html">
+[![Publication trends](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](
+[https://your-username.github.io](https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph1_TopAuthorPaperShares_After1980.html)
 
+*Figure 1. Publication trends in Top Five economics journals. Click the figure to open the interactive version.*
 # New authors account for a smaller share of authors over time.
 # New authors publish their first top-five increasingly with experienced coauthors, Share of new authors by coauthor composition in their first top-five publication, 1980–2025
 # Observed publication gaps are shorter for newer cohorts: Average years between consecutive top-five publications, by cohort of first publication
