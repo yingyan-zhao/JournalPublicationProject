@@ -1,16 +1,10 @@
-# Economics Top-Journal Publication Concentration
+# Higher Entry Barriers to Break into Economics Top-Five Journal Publication
 
-This project studies how publications in top economics journals are concentrated among authors over time.
+In this project, I study the long-term trend of economics publications in top-five journals. Publishing in Top-five journals are very hard in economics. The bar is very high. However, I noticed that publications by established researchers are way more easier than new comers. This could be established researchers with higher ability or through learning by doing, are more capable to produce high quality researches. However, other factors play big roles as well, for example networking, reputations of big names. These factors may bias referee and editors' opinions and making established researchers are more easier to publish. The entry barriers for new commers are higher. For new commers, their researches are under a stricter scrutize than established ones.
 
-## Research Question
+In this project, I study the trend of publications in top-five journals over a long time and showing that the entry barriers for new commers are getting higher and higher. Reputations play an increasing role in this publishing games.
 
-How concentrated are publications in top economics journals among individual authors, and how has that concentration changed across cohorts, journals, fields, and institutions?
-
-## Starting Scope
-
-The initial unit of analysis is an author-journal-year publication record. A single article with multiple authors should contribute fractional publication credit by default, while full-count credit can be used as a robustness check.
-
-Candidate journal set:
+A footnote Top-Five Journals in economics are:
 
 - American Economic Review
 - Econometrica
@@ -18,93 +12,26 @@ Candidate journal set:
 - Quarterly Journal of Economics
 - Review of Economic Studies
 
-Optional extensions:
+## Data Collection
 
-- Add Review of Economics and Statistics, Journal of Finance, Journal of Monetary Economics, or field top journals.
-- Compare economics with adjacent disciplines.
-- Study concentration by institution, gender, PhD institution, country, or field.
+- Publications in Top-Five Journals (1950-2026) are collected through OpenAlex and CrossRef API
+- I supplement the information in Keywords, Abstract, Jel Codes by the dataset: Repec API, AEA Journals API and NBER, webscraping each paper when these information are missing.
 
-## Data Schema
+After integrating all the information from different data sources and cleaning the data, the final dataset includes XXXX total publications from Top-Five Journals in economics, XXX unique authors, covering the period from 1950 to 2026. This dataset provides a comprehensive view of the publications in top journals in economics, including:
+- Publication information: publication year, journal
+- Authors information: names, institutions
 
-Place raw source files in `data/raw/`. The starter scripts expect a processed file at:
+## Research Question
 
-`data/processed/publications.csv`
+Identify the change in the pattern of economics publications. 
 
-Required columns:
+## Tech Stack Overview:
 
-- `publication_id`: stable article identifier
-- `year`: publication year
-- `journal`: journal name
-- `author_id`: stable author identifier
-- `author_name`: display name
-- `author_position`: author order, if available
-- `n_authors`: number of authors on the publication
-- `abstract`: article abstract
-- `keywords`: article keywords
-- `jel_codes`: JEL classification codes
-- `acknowledgments`: thanks, acknowledgments, funding notes, and related article notes when available
+Core Python & ML: 
+API & Deployment: FastAPI, Pydantic, Uvicorn, Docker, pytest
 
-Recommended columns:
-
-- `title`
-- `doi`
-- `institution`
-- `field`: broad economics field derived from JEL classification
-- `first_submission_date`
-- `accepted_date`
-- `online_publication_date`
-- `issue_publication_date`
-- `first_working_paper_date`
-- `first_working_paper_source`
-- `first_working_paper_url`
-- `first_working_paper_repository`
-- `citation_count`
-- `citation_source`
-- `citation_date`
-- `citation_url`
-- `openalex_primary_domain`
-- `openalex_primary_field`
-- `openalex_primary_subfield`
-- `openalex_primary_topic`
-- `openalex_topics`
-- `submission_date_source`
-- `acknowledgments_source`
-- `source`
-
-## Concentration Measures
-
-The core analysis will estimate:
-
-- Share of publications by top 1%, 5%, and 10% of authors
-- Herfindahl-Hirschman Index
-- Gini coefficient
-- Lorenz curves
-- Author productivity distribution
-- Entry, persistence, and repeat-publication rates
-
-## Reproducible Workflow
-
-1. Collect the first version of the dataset from OpenAlex:
-
-```bash
-python -m src.econ_pub_concentration.collect_openalex --from-year 2015 --to-year 2020 --mailto your_email@example.com
-```
-
-2. Enrich the OpenAlex records with Crossref metadata using DOI matches.
-3. Add fields not fully covered by OpenAlex or Crossref, such as JEL codes, acknowledgments, submission dates, and first working-paper dates.
-4. Clean and harmonize the data into `data/processed/publications.csv`.
-5. Run:
-
-```bash
-python -m src.econ_pub_concentration.analyze data/processed/publications.csv
-```
-
-Outputs are written to:
-
-- `outputs/tables/`
-- `outputs/figures/`
-
-See [docs/openalex_data_plan.md](docs/openalex_data_plan.md) for the OpenAlex collection plan.
+## Main Findings
+# <img src="path_to_graph.png">
 
 ## Project Structure
 
