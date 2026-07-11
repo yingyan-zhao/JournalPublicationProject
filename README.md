@@ -69,8 +69,8 @@ https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overal
 *Figure 2. Click the figure to open the interactive version.*
 
 # New authors publish their first top-five increasingly with experienced coauthors, Share of new authors by coauthor composition in their first top-five publication, 1980–2025
-[![Publication trends3](outputs/figures/overall/Graph3_NewAuthorCoauthor_1980_2025.png)](
-https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph3_NewAuthorCoauthor_1980_2025.html)
+[![Publication trends3](outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.png)](
+https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph3_NewAuthorCoauthorType_1980_2025.html)
 *Figure 3. Click the figure to open the interactive version.*
 
 # Observed publication gaps are shorter for newer cohorts: Average years between consecutive top-five publications, by cohort of first publication
