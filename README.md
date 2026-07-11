@@ -58,15 +58,30 @@ Because 2026 is not yet a complete publication year, observations from 2026 are 
 Identify the change in the pattern of economics publications: Has it become harder to break into economics’ leading journals without an established publication record?
 
 # Main Findings
-# A growing share of papers include top-ranked authors (Author rankings based on publication count over the preceding 20 years)
+## A growing share of papers include top-ranked authors (Author rankings based on publication count over the preceding 20 years)
 [![Publication trends](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](
-[https://your-username.github.io](https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph1_TopAuthorPaperShares_After1980.html)
-
+https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph1_TopAuthorPaperShares_After1980.html)
 *Figure 1. Publication trends in Top Five economics journals. Click the figure to open the interactive version.*
+
 # New authors account for a smaller share of authors over time.
+[![Publication trends](outputs/figures/overall/Graph2_1_NewAuthorCountShare_1980_2025.png)](
+https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph2_1_NewAuthorCountShare_1980_2025.html)
+*Figure 2. Click the figure to open the interactive version.*
+
 # New authors publish their first top-five increasingly with experienced coauthors, Share of new authors by coauthor composition in their first top-five publication, 1980–2025
+[![Publication trends](outputs/figures/overall/Graph3_NewAuthorCoauthor_1980_2025.png)](
+https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph3_NewAuthorCoauthor_1980_2025.html)
+*Figure 3. Click the figure to open the interactive version.*
+
 # Observed publication gaps are shorter for newer cohorts: Average years between consecutive top-five publications, by cohort of first publication
+[![Publication trends](outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.png)](
+https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph4_ConsecutivePublicationGaps_ByCohort.html)
+*Figure 4. Click the figure to open the interactive version.*
+
 # The observed gap to a second top-five publication has narrowed
+[![Publication trends](outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.png)](
+https://github.com/yingyan-zhao/JournalPublicationProject/figures/outputs/overall/Graph5_FirstToSecondPublicationGap_1980_2020.html)
+*Figure 5. Click the figure to open the interactive version.*
 
 
 ## Project Structure
