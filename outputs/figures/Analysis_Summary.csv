@@ -1,0 +1,12 @@
+analysis,paper_author_rows,unique_papers,unique_authors,output_directory
+All fields,42468,23486,15608,data/processed/author_concentration/overall
+JEL D,14505,7192,6918,data/processed/author_concentration/by_field/D
+JEL C,10318,5689,5311,data/processed/author_concentration/by_field/C
+JEL E,8629,4816,4368,data/processed/author_concentration/by_field/E
+JEL J,7511,3626,4253,data/processed/author_concentration/by_field/J
+JEL H,5023,2608,3348,data/processed/author_concentration/by_field/H
+JEL O,4792,2313,2869,data/processed/author_concentration/by_field/O
+JEL L,4578,2229,2938,data/processed/author_concentration/by_field/L
+JEL G,4725,2223,2946,data/processed/author_concentration/by_field/G
+JEL F,3517,1901,2023,data/processed/author_concentration/by_field/F
+JEL I,3836,1618,2327,data/processed/author_concentration/by_field/I

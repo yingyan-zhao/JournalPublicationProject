@@ -7,10 +7,6 @@ __pycache__/
 !.env.example
 *.pyc
 data/
-outputs/figures/*
-outputs/tables/*
-!outputs/figures/.gitkeep
-!outputs/tables/.gitkeep
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*

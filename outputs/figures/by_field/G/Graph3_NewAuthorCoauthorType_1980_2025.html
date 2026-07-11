@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New authors publish their first top-five increasingly with experienced coauthors</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #ffffff;
+      --foreground: #1e252b;
+      --muted-foreground: #68737e;
+      --grid: #dce1e6;
+      --axis: #aeb7c0;
+      --experienced: #087e73;
+      --new-only: #e67e22;
+      --solo: #a8afb7;
+      --tooltip-background: #1e252b;
+      --tooltip-foreground: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #171a1d;
+        --foreground: #f1f3f4;
+        --muted-foreground: #b2bac2;
+        --grid: #343a40;
+        --axis: #626c75;
+        --experienced: #46c6b8;
+        --new-only: #f3a35c;
+        --solo: #89939d;
+        --tooltip-background: #f1f3f4;
+        --tooltip-foreground: #171a1d;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+    }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .chart {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted-foreground);
+      font-size: 15px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .legend button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted-foreground);
+      font: inherit;
+      cursor: pointer;
+    }
+    .legend button:hover,
+    .legend button:focus-visible,
+    .legend button[aria-pressed="true"] {
+      border-color: var(--axis);
+      color: var(--foreground);
+      outline-offset: 2px;
+    }
+    .swatch {
+      width: 22px;
+      height: 3px;
+      background: var(--swatch);
+    }
+    .chart-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .grid-line {
+      stroke: var(--grid);
+      stroke-width: 1;
+    }
+    .axis-line {
+      stroke: var(--axis);
+      stroke-width: 1;
+    }
+    .axis-label,
+    .tick-label,
+    .annotation {
+      fill: var(--muted-foreground);
+      font-family: inherit;
+    }
+    .axis-label { font-size: 14px; }
+    .tick-label,
+    .annotation { font-size: 12px; }
+    .annotation,
+    .annotation-line { pointer-events: none; }
+    .annotation-line {
+      stroke: var(--muted-foreground);
+      stroke-width: 1;
+    }
+    .series-line {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+      opacity: 0.36;
+      transition: opacity 160ms ease, stroke-width 160ms ease;
+    }
+    .series-line[data-series="experienced"] { stroke: var(--experienced); }
+    .series-line[data-series="new_only"] { stroke: var(--new-only); }
+    .series-line[data-series="solo"] { stroke: var(--solo); }
+    .series-line.is-active {
+      stroke-width: 4;
+      opacity: 1;
+    }
+    .hit-line {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 20;
+      pointer-events: stroke;
+      cursor: crosshair;
+    }
+    .hover-marker {
+      display: none;
+      stroke: var(--background);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+    .hover-marker[data-series="experienced"] { fill: var(--experienced); }
+    .hover-marker[data-series="new_only"] { fill: var(--new-only); }
+    .hover-marker[data-series="solo"] { fill: var(--solo); }
+    .tooltip {
+      position: absolute;
+      z-index: 2;
+      transform: translate(-50%, calc(-100% - 10px));
+      max-width: 260px;
+      padding: 7px 9px;
+      border-radius: 4px;
+      background: var(--tooltip-background);
+      color: var(--tooltip-foreground);
+      font-size: 13px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .tooltip[hidden] { display: none; }
+    .note {
+      margin: 4px 0 0;
+      color: var(--muted-foreground);
+      font-size: 12px;
+    }
+    @media (max-width: 520px) {
+      .chart { padding: 16px 10px; }
+      h1 { font-size: 22px; }
+      .subtitle { font-size: 13px; }
+      .grid-line,
+      .axis-line,
+      .series-line,
+      .hit-line,
+      .hover-marker,
+      .annotation-line { vector-effect: non-scaling-stroke; }
+      .tick-label { font-size: 25px; }
+      .axis-label { font-size: 23px; }
+      .annotation,
+      .annotation-line { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .series-line { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main id="new-author-coauthor-chart" class="chart">
+    <h1>New authors publish their first top-five increasingly with experienced coauthors</h1>
+    <p class="subtitle">JEL field G · Share of new authors by coauthor composition in their first top-five publication, 1980–2025</p>
+    <div class="legend" aria-label="Choose the emphasized coauthor composition">
+      <button type="button" data-series="experienced" aria-pressed="true"><span class="swatch" style="--swatch: var(--experienced)"></span>At least one experienced coauthor</button>
+      <button type="button" data-series="new_only" aria-pressed="false"><span class="swatch" style="--swatch: var(--new-only)"></span>New coauthors only</button>
+      <button type="button" data-series="solo" aria-pressed="false"><span class="swatch" style="--swatch: var(--solo)"></span>Solo-authored</button>
+    </div>
+    <svg class="chart-svg" viewBox="0 0 900 540" role="img" aria-labelledby="chart-title chart-description">
+      <title id="chart-title">Coauthor composition in new authors' first top-five publications</title>
+      <desc id="chart-description">Hover over a line to see the year and share of new authors in that coauthor category.</desc>
+    </svg>
+    <div class="tooltip" role="status" aria-live="polite" hidden></div>
+    <p class="note"><strong>Note:</strong> New authors are the ones who published their first top-five in that year. &ldquo;Experienced coauthor&rdquo; means the coauthor published at least one top-five before. Categories are mutually exclusive and sum to 100%.</p>
+  </main>
+  <script>
+    (() => {
+      const series = {"experienced":[[1980,0.043478],[1981,0.0],[1982,0.133333],[1983,0.1875],[1984,0.066667],[1985,0.129032],[1986,0.0],[1987,0.041667],[1988,0.318182],[1989,0.0625],[1990,0.318182],[1991,0.157895],[1992,0.1],[1993,0.631579],[1994,0.428571],[1995,0.071429],[1996,0.3125],[1997,0.214286],[1998,0.318182],[1999,0.207547],[2000,0.195652],[2001,0.25],[2002,0.269231],[2003,0.269841],[2004,0.370968],[2005,0.366197],[2006,0.095238],[2007,0.295082],[2008,0.492063],[2009,0.461538],[2010,0.404762],[2011,0.390244],[2012,0.307087],[2013,0.409639],[2014,0.428571],[2015,0.505376],[2016,0.398058],[2017,0.447619],[2018,0.545455],[2019,0.435897],[2020,0.493976],[2021,0.459677],[2022,0.494118],[2023,0.494845],[2024,0.5],[2025,0.491803]],"new_only":[[1980,0.565217],[1981,0.6],[1982,0.4],[1983,0.5],[1984,0.733333],[1985,0.483871],[1986,0.4],[1987,0.541667],[1988,0.318182],[1989,0.5625],[1990,0.454545],[1991,0.605263],[1992,0.7],[1993,0.210526],[1994,0.428571],[1995,0.428571],[1996,0.25],[1997,0.571429],[1998,0.454545],[1999,0.641509],[2000,0.73913],[2001,0.625],[2002,0.596154],[2003,0.587302],[2004,0.548387],[2005,0.535211],[2006,0.833333],[2007,0.606557],[2008,0.428571],[2009,0.423077],[2010,0.52381],[2011,0.560976],[2012,0.606299],[2013,0.445783],[2014,0.47619],[2015,0.419355],[2016,0.553398],[2017,0.466667],[2018,0.363636],[2019,0.512821],[2020,0.433735],[2021,0.491935],[2022,0.411765],[2023,0.43299],[2024,0.455357],[2025,0.47541]],"solo":[[1980,0.391304],[1981,0.4],[1982,0.466667],[1983,0.3125],[1984,0.2],[1985,0.387097],[1986,0.6],[1987,0.416667],[1988,0.363636],[1989,0.375],[1990,0.227273],[1991,0.236842],[1992,0.2],[1993,0.157895],[1994,0.142857],[1995,0.5],[1996,0.4375],[1997,0.214286],[1998,0.227273],[1999,0.150943],[2000,0.065217],[2001,0.125],[2002,0.134615],[2003,0.142857],[2004,0.080645],[2005,0.098592],[2006,0.071429],[2007,0.098361],[2008,0.079365],[2009,0.115385],[2010,0.071429],[2011,0.04878],[2012,0.086614],[2013,0.144578],[2014,0.095238],[2015,0.075269],[2016,0.048544],[2017,0.085714],[2018,0.090909],[2019,0.051282],[2020,0.072289],[2021,0.048387],[2022,0.094118],[2023,0.072165],[2024,0.044643],[2025,0.032787]]};
+      const showAnnotation = false;
+      const labels = {
+        experienced: "At least one experienced coauthor",
+        new_only: "New coauthors only",
+        solo: "Solo-authored"
+      };
+      const root = document.getElementById("new-author-coauthor-chart");
+      const svg = root.querySelector(".chart-svg");
+      const tooltip = root.querySelector(".tooltip");
+      const ns = "http://www.w3.org/2000/svg";
+      const width = 900;
+      const height = 540;
+      const margin = { top: 18, right: 32, bottom: 68, left: 90 };
+      const fromYear = 1980;
+      const toYear = 2025;
+      const plotRight = width - margin.right;
+      const plotBottom = height - margin.bottom;
+      const x = year => margin.left + (year - fromYear) / (toYear - fromYear) * (plotRight - margin.left);
+      const y = value => plotBottom - value * (plotBottom - margin.top);
+      const add = (name, attributes, text) => {
+        const node = document.createElementNS(ns, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+        if (text !== undefined) node.textContent = text;
+        svg.appendChild(node);
+        return node;
+      };
+
+      for (let value = 0; value <= 1.0001; value += 0.2) {
+        const position = y(value);
+        add("line", { class: "grid-line", x1: margin.left, x2: plotRight, y1: position, y2: position });
+        add("text", { class: "tick-label", x: margin.left - 12, y: position + 4, "text-anchor": "end" }, `${Math.round(value * 100)}%`);
+      }
+      [1980, 1990, 2000, 2010, 2020, 2025].filter(year => year >= fromYear && year <= toYear).forEach(year => {
+        add("text", { class: "tick-label", x: x(year), y: plotBottom + 25, "text-anchor": "middle" }, year);
+      });
+      add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
+      add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 14, "text-anchor": "middle" }, "Year of first top-five publication");
+      add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Share of new authors");
+
+      const keys = ["experienced", "new_only", "solo"];
+      const lineNodes = {};
+      const markerNodes = {};
+      const hitNodes = {};
+      keys.forEach(key => {
+        const path = series[key].map(([year, value], index) => `${index ? "L" : "M"}${x(year).toFixed(2)},${y(value).toFixed(2)}`).join(" ");
+        lineNodes[key] = add("path", { class: `series-line${key === "experienced" ? " is-active" : ""}`, "data-series": key, d: path });
+        markerNodes[key] = add("circle", { class: "hover-marker", "data-series": key, r: 5 });
+        hitNodes[key] = add("path", { class: "hit-line", "data-series": key, d: path });
+      });
+
+      if (showAnnotation) {
+        const target = series.experienced.find(point => point[0] === 2025) ?? series.experienced[series.experienced.length - 1];
+        add("line", { class: "annotation-line", x1: x(2014), y1: y(0.91), x2: x(target[0]), y2: y(target[1]) });
+        add("text", { class: "annotation", x: x(1994), y: y(0.96) }, "Entry with experienced coauthors rose from about 28% to 77%,");
+        add("text", { class: "annotation", x: x(1994), y: y(0.915) }, "+49 percentage points since 1980");
+      }
+
+      let selectedSeries = "experienced";
+      const activate = key => {
+        keys.forEach(seriesKey => {
+          lineNodes[seriesKey].classList.toggle("is-active", seriesKey === key);
+        });
+        root.querySelectorAll("button[data-series]").forEach(button => {
+          button.setAttribute("aria-pressed", button.dataset.series === key ? "true" : "false");
+        });
+      };
+      const hideTooltip = key => {
+        markerNodes[key].style.display = "none";
+        tooltip.hidden = true;
+      };
+      const showTooltip = (key, event) => {
+        const svgRect = svg.getBoundingClientRect();
+        const svgX = (event.clientX - svgRect.left) / svgRect.width * width;
+        const nearest = series[key].reduce((best, point) => {
+          return Math.abs(x(point[0]) - svgX) < Math.abs(x(best[0]) - svgX) ? point : best;
+        });
+        const marker = markerNodes[key];
+        marker.setAttribute("cx", x(nearest[0]));
+        marker.setAttribute("cy", y(nearest[1]));
+        marker.style.display = "block";
+        tooltip.textContent = `${labels[key]} - ${nearest[0]}: ${(nearest[1] * 100).toFixed(1)}%`;
+        tooltip.hidden = false;
+        const rootRect = root.getBoundingClientRect();
+        const markLeft = svgRect.left - rootRect.left + x(nearest[0]) / width * svgRect.width;
+        const markTop = svgRect.top - rootRect.top + y(nearest[1]) / height * svgRect.height;
+        tooltip.style.left = `${Math.max(135, Math.min(root.clientWidth - 135, markLeft))}px`;
+        tooltip.style.top = `${Math.max(32, markTop)}px`;
+      };
+
+      keys.forEach(key => {
+        hitNodes[key].addEventListener("pointerenter", event => {
+          activate(key);
+          showTooltip(key, event);
+        });
+        hitNodes[key].addEventListener("pointermove", event => {
+          activate(key);
+          showTooltip(key, event);
+        });
+        hitNodes[key].addEventListener("pointerleave", () => {
+          hideTooltip(key);
+          activate(selectedSeries);
+        });
+      });
+      root.querySelectorAll("button[data-series]").forEach(button => {
+        button.addEventListener("mouseenter", () => activate(button.dataset.series));
+        button.addEventListener("focus", () => activate(button.dataset.series));
+        button.addEventListener("click", () => {
+          selectedSeries = button.dataset.series;
+          activate(selectedSeries);
+        });
+        button.addEventListener("mouseleave", () => activate(selectedSeries));
+        button.addEventListener("blur", () => activate(selectedSeries));
+      });
+    })();
+  </script>
+</body>
+</html>

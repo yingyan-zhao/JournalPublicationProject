@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A growing share of papers include top-ranked authors</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #ffffff;
+      --foreground: #1e252b;
+      --muted-foreground: #68737e;
+      --grid: #dce1e6;
+      --axis: #aeb7c0;
+      --series-1: #b6bdc5;
+      --series-5: #e67e22;
+      --series-10: #087e73;
+      --tooltip-background: #1e252b;
+      --tooltip-foreground: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #171a1d;
+        --foreground: #f1f3f4;
+        --muted-foreground: #b2bac2;
+        --grid: #343a40;
+        --axis: #626c75;
+        --series-1: #7f8993;
+        --series-5: #f3a35c;
+        --series-10: #46c6b8;
+        --tooltip-background: #f1f3f4;
+        --tooltip-foreground: #171a1d;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+    }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .chart {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted-foreground);
+      font-size: 15px;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .legend button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted-foreground);
+      font: inherit;
+      cursor: pointer;
+    }
+    .legend button:hover,
+    .legend button:focus-visible,
+    .legend button[aria-pressed="true"] {
+      border-color: var(--axis);
+      color: var(--foreground);
+      outline-offset: 2px;
+    }
+    .swatch {
+      width: 22px;
+      height: 3px;
+      background: var(--swatch);
+    }
+    .chart-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .grid-line {
+      stroke: var(--grid);
+      stroke-width: 1;
+    }
+    .axis-line {
+      stroke: var(--axis);
+      stroke-width: 1;
+    }
+    .axis-label,
+    .tick-label,
+    .end-label {
+      fill: var(--muted-foreground);
+      font-family: inherit;
+    }
+    .axis-label {
+      font-size: 14px;
+    }
+    .tick-label,
+    .end-label {
+      font-size: 12px;
+    }
+    .annotation {
+      fill: var(--muted-foreground);
+      font-family: inherit;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    .annotation-line {
+      stroke: var(--muted-foreground);
+      stroke-width: 1;
+      pointer-events: none;
+    }
+    .series-line {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+      opacity: 0.32;
+      transition: opacity 160ms ease, stroke-width 160ms ease;
+    }
+    .series-line[data-series="1"] { stroke: var(--series-1); }
+    .series-line[data-series="5"] { stroke: var(--series-5); }
+    .series-line[data-series="10"] { stroke: var(--series-10); }
+    .series-line.is-active {
+      stroke-width: 4;
+      opacity: 1;
+    }
+    .hit-line {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 18;
+      pointer-events: stroke;
+      cursor: crosshair;
+    }
+    .hover-marker {
+      stroke: var(--background);
+      stroke-width: 2;
+      display: none;
+      pointer-events: none;
+    }
+    .hover-marker[data-series="1"] { fill: var(--series-1); }
+    .hover-marker[data-series="5"] { fill: var(--series-5); }
+    .hover-marker[data-series="10"] { fill: var(--series-10); }
+    .tooltip {
+      position: absolute;
+      z-index: 2;
+      transform: translate(-50%, calc(-100% - 10px));
+      max-width: 180px;
+      padding: 7px 9px;
+      border-radius: 4px;
+      background: var(--tooltip-background);
+      color: var(--tooltip-foreground);
+      font-size: 13px;
+      pointer-events: none;
+    }
+    .tooltip[hidden] {
+      display: none;
+    }
+    @media (max-width: 520px) {
+      .chart { padding: 16px 10px; }
+      h1 { font-size: 22px; }
+      .subtitle { font-size: 13px; }
+      .grid-line,
+      .axis-line,
+      .series-line,
+      .hit-line,
+      .hover-marker {
+        vector-effect: non-scaling-stroke;
+      }
+      .tick-label { font-size: 26px; }
+      .axis-label { font-size: 24px; }
+      .end-label { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .series-line { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main id="top-author-share-chart" class="chart">
+    <h1>A growing share of papers include top-ranked authors</h1>
+    <p class="subtitle">All fields &middot; Author rankings based on publication count over the preceding 20 years</p>
+    <div class="legend" aria-label="Choose the emphasized author group">
+      <button type="button" data-series="1" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-1)"></span>Top 1% of authors</button>
+      <button type="button" data-series="5" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-5)"></span>Top 5% of authors</button>
+      <button type="button" data-series="10" aria-pressed="true"><span class="swatch" style="--swatch: var(--series-10)"></span>Top 10% of authors</button>
+    </div>
+    <svg class="chart-svg" viewBox="0 0 900 520" role="img" aria-labelledby="chart-title chart-description">
+      <title id="chart-title">Top author paper shares over time</title>
+      <desc id="chart-description">Hover over a line to emphasize it and inspect its annual values.</desc>
+    </svg>
+    <div class="tooltip" role="status" aria-live="polite" hidden></div>
+  </main>
+  <script>
+    (() => {
+      const series = {"1":[[1980,0.034121],[1981,0.059859],[1982,0.058608],[1983,0.093863],[1984,0.061475],[1985,0.043321],[1986,0.069767],[1987,0.068548],[1988,0.076923],[1989,0.083721],[1990,0.107759],[1991,0.042146],[1992,0.056338],[1993,0.063725],[1994,0.095745],[1995,0.116279],[1996,0.110465],[1997,0.089385],[1998,0.104938],[1999,0.088146],[2000,0.085714],[2001,0.077348],[2002,0.085642],[2003,0.080429],[2004,0.110512],[2005,0.108824],[2006,0.086053],[2007,0.112994],[2008,0.101064],[2009,0.089239],[2010,0.081301],[2011,0.08371],[2012,0.09589],[2013,0.09949],[2014,0.097561],[2015,0.138173],[2016,0.127273],[2017,0.105578],[2018,0.127321],[2019,0.109859],[2020,0.124688],[2021,0.110577],[2022,0.089806],[2023,0.100985],[2024,0.132678],[2025,0.128736],[2026,0.12037]],"5":[[1980,0.183727],[1981,0.207746],[1982,0.260073],[1983,0.220217],[1984,0.245902],[1985,0.209386],[1986,0.228682],[1987,0.217742],[1988,0.266968],[1989,0.223256],[1990,0.219828],[1991,0.183908],[1992,0.258216],[1993,0.230392],[1994,0.297872],[1995,0.232558],[1996,0.174419],[1997,0.195531],[1998,0.216049],[1999,0.215805],[2000,0.231429],[2001,0.223757],[2002,0.254408],[2003,0.235925],[2004,0.293801],[2005,0.264706],[2006,0.252226],[2007,0.29661],[2008,0.287234],[2009,0.330709],[2010,0.279133],[2011,0.246606],[2012,0.278539],[2013,0.34949],[2014,0.317073],[2015,0.297424],[2016,0.290909],[2017,0.286853],[2018,0.318302],[2019,0.290141],[2020,0.346633],[2021,0.326923],[2022,0.283981],[2023,0.285714],[2024,0.346437],[2025,0.296552],[2026,0.287037]],"10":[[1980,0.278215],[1981,0.299296],[1982,0.369963],[1983,0.33574],[1984,0.368852],[1985,0.310469],[1986,0.364341],[1987,0.346774],[1988,0.361991],[1989,0.437209],[1990,0.327586],[1991,0.279693],[1992,0.352113],[1993,0.362745],[1994,0.361702],[1995,0.325581],[1996,0.30814],[1997,0.329609],[1998,0.32716],[1999,0.297872],[2000,0.322857],[2001,0.356354],[2002,0.355164],[2003,0.335121],[2004,0.390836],[2005,0.4],[2006,0.347181],[2007,0.415254],[2008,0.409574],[2009,0.417323],[2010,0.379404],[2011,0.352941],[2012,0.406393],[2013,0.456633],[2014,0.439024],[2015,0.440281],[2016,0.443182],[2017,0.440239],[2018,0.493369],[2019,0.43662],[2020,0.503741],[2021,0.475962],[2022,0.451456],[2023,0.460591],[2024,0.476658],[2025,0.464368],[2026,0.481481]]};
+      const showAnnotation = true;
+      const root = document.getElementById("top-author-share-chart");
+      const svg = root.querySelector(".chart-svg");
+      const tooltip = root.querySelector(".tooltip");
+      const ns = "http://www.w3.org/2000/svg";
+      const width = 900;
+      const height = 520;
+      const margin = { top: 18, right: 70, bottom: 62, left: 86 };
+      const keys = ["1", "5", "10"];
+      const points = Object.values(series).flat();
+      const xMin = Math.min(...points.map(point => point[0]));
+      const xMax = Math.max(...points.map(point => point[0]));
+      const observedMax = Math.max(...points.map(point => point[1]));
+      const tickMax = Math.max(.1, Math.ceil(observedMax * 10) / 10);
+      const yMax = tickMax + .035;
+      const plotRight = width - margin.right;
+      const plotBottom = height - margin.bottom;
+      const x = year => margin.left + (year - xMin) / (xMax - xMin) * (plotRight - margin.left);
+      const y = value => plotBottom - value / yMax * (plotBottom - margin.top);
+      const add = (name, attributes, text) => {
+        const node = document.createElementNS(ns, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+        if (text !== undefined) node.textContent = text;
+        svg.appendChild(node);
+        return node;
+      };
+
+      for (let value = 0; value <= tickMax + .0001; value += .1) {
+        const position = y(value);
+        add("line", { class: "grid-line", x1: margin.left, x2: plotRight, y1: position, y2: position });
+        add("text", { class: "tick-label", x: margin.left - 12, y: position + 4, "text-anchor": "end" }, `${Math.round(value * 100)}%`);
+      }
+      for (let year = Math.ceil(xMin / 10) * 10; year <= xMax; year += 10) {
+        add("text", { class: "tick-label", x: x(year), y: plotBottom + 25, "text-anchor": "middle" }, year);
+      }
+      add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
+      add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Publication year");
+      add("text", { class: "axis-label", x: 20, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 20 ${(margin.top + plotBottom) / 2})` }, "Share of papers with at least one top-ranked author");
+
+      const lineNodes = {};
+      const markerNodes = {};
+      const hitNodes = {};
+      keys.forEach(key => {
+        const path = series[key].map(([year, value], index) => `${index ? "L" : "M"}${x(year).toFixed(2)},${y(value).toFixed(2)}`).join(" ");
+        lineNodes[key] = add("path", { class: `series-line${key === "10" ? " is-active" : ""}`, "data-series": key, d: path });
+        markerNodes[key] = add("circle", { class: "hover-marker", "data-series": key, r: 5 });
+        hitNodes[key] = add("path", { class: "hit-line", "data-series": key, d: path });
+        const lastPoint = series[key][series[key].length - 1];
+        add("text", { class: "end-label", x: x(lastPoint[0]) + 8, y: y(lastPoint[1]) + 4 }, `Top ${key}%`);
+      });
+      if (showAnnotation) {
+        const target = series["10"].find(point => point[0] === 2025) ?? series["10"][series["10"].length - 1];
+        add("line", { class: "annotation-line", x1: x(2016), y1: y(0.55), x2: x(target[0]), y2: y(target[1]) });
+        add("text", { class: "annotation", x: x(1997), y: y(0.585) }, "The share of papers with a top-10% author");
+        add("text", { class: "annotation", x: x(1997), y: y(0.565) }, "rose from 28% in 1980 to 46% in 2025.");
+      }
+
+      let selectedSeries = "10";
+      const activate = key => {
+        keys.forEach(seriesKey => {
+          lineNodes[seriesKey].classList.toggle("is-active", seriesKey === key);
+        });
+        root.querySelectorAll("button[data-series]").forEach(button => {
+          button.setAttribute("aria-pressed", button.dataset.series === key ? "true" : "false");
+        });
+      };
+      const hideTooltip = key => {
+        markerNodes[key].style.display = "none";
+        tooltip.hidden = true;
+      };
+      const showTooltip = (key, event) => {
+        const svgRect = svg.getBoundingClientRect();
+        const svgX = (event.clientX - svgRect.left) / svgRect.width * width;
+        const nearest = series[key].reduce((best, point) => {
+          return Math.abs(x(point[0]) - svgX) < Math.abs(x(best[0]) - svgX) ? point : best;
+        });
+        const marker = markerNodes[key];
+        marker.setAttribute("cx", x(nearest[0]));
+        marker.setAttribute("cy", y(nearest[1]));
+        marker.style.display = "block";
+        tooltip.textContent = `Top ${key}% · ${nearest[0]}: ${(nearest[1] * 100).toFixed(1)}% of papers`;
+        tooltip.hidden = false;
+        const rootRect = root.getBoundingClientRect();
+        const markLeft = svgRect.left - rootRect.left + x(nearest[0]) / width * svgRect.width;
+        const markTop = svgRect.top - rootRect.top + y(nearest[1]) / height * svgRect.height;
+        const clampedLeft = Math.max(95, Math.min(root.clientWidth - 95, markLeft));
+        tooltip.style.left = `${clampedLeft}px`;
+        tooltip.style.top = `${Math.max(32, markTop)}px`;
+      };
+
+      keys.forEach(key => {
+        hitNodes[key].addEventListener("pointerenter", event => {
+          activate(key);
+          showTooltip(key, event);
+        });
+        hitNodes[key].addEventListener("pointermove", event => {
+          activate(key);
+          showTooltip(key, event);
+        });
+        hitNodes[key].addEventListener("pointerleave", () => {
+          hideTooltip(key);
+          activate(selectedSeries);
+        });
+      });
+      root.querySelectorAll("button[data-series]").forEach(button => {
+        button.addEventListener("mouseenter", () => activate(button.dataset.series));
+        button.addEventListener("focus", () => activate(button.dataset.series));
+        button.addEventListener("click", () => {
+          selectedSeries = button.dataset.series;
+          activate(selectedSeries);
+        });
+        button.addEventListener("mouseleave", () => activate(selectedSeries));
+        button.addEventListener("blur", () => activate(selectedSeries));
+      });
+    })();
+  </script>
+</body>
+</html>
