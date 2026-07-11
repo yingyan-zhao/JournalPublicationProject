@@ -22,6 +22,7 @@ FUZZY_AUTHOR_ROWS_OUTPUT_CSV = (
 )
 FUZZY_MATCHES_OUTPUT_CSV = OUTPUT_DIR / "JEL_Training_Data_AuthorID_FuzzyMatches.csv"
 PAPER_AUTHOR_OUTPUT_CSV = OUTPUT_DIR / "JEL_Training_Data_PaperAuthor_WithAuthorID.csv"
+UNIQUE_AUTHOR_LIST_OUTPUT_CSV = OUTPUT_DIR / "JEL_Training_Data_AuthorList.csv"
 AUTHOR_CROSSWALK_OUTPUT_CSV = OUTPUT_DIR / "JEL_Training_Data_AuthorID_Crosswalk.csv"
 MANUAL_REVIEW_OUTPUT_CSV = OUTPUT_DIR / "JEL_Training_Data_AuthorID_ManualReview.csv"
 
@@ -49,6 +50,7 @@ REQUIRED_COLUMNS = [
 # Step 6. Flag ambiguous groups for manual review.
 # Step 7. Assign author_id.
 # Step 8. Export author-level crosswalk and paper-author dataset.
+# Step 9. Export one unique author record per nonblank author_id.
 ## #########################################################################
 
 
@@ -64,12 +66,14 @@ def main() -> None:
     paper_author_rows = add_manual_review_flags(paper_author_rows)
     author_crosswalk = create_author_crosswalk(paper_author_rows)
     manual_review = create_manual_review_data(paper_author_rows)
+    unique_author_list = create_unique_author_list(paper_author_rows)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     exact_author_rows.to_csv(EXACT_AUTHOR_ROWS_OUTPUT_CSV, index=False)
     fuzzy_author_rows.to_csv(FUZZY_AUTHOR_ROWS_OUTPUT_CSV, index=False)
     fuzzy_matches.to_csv(FUZZY_MATCHES_OUTPUT_CSV, index=False)
     paper_author_rows.to_csv(PAPER_AUTHOR_OUTPUT_CSV, index=False)
+    unique_author_list.to_csv(UNIQUE_AUTHOR_LIST_OUTPUT_CSV, index=False)
     author_crosswalk.to_csv(AUTHOR_CROSSWALK_OUTPUT_CSV, index=False)
     manual_review.to_csv(MANUAL_REVIEW_OUTPUT_CSV, index=False)
 
@@ -103,6 +107,8 @@ def main() -> None:
     print(f"  Fuzzy grouped author rows CSV: {FUZZY_AUTHOR_ROWS_OUTPUT_CSV}")
     print(f"  Fuzzy matches diagnostic CSV: {FUZZY_MATCHES_OUTPUT_CSV}")
     print(f"  Paper-author output CSV: {PAPER_AUTHOR_OUTPUT_CSV}")
+    print(f"  Unique author-list rows: {len(unique_author_list)}")
+    print(f"  Unique author-list output CSV: {UNIQUE_AUTHOR_LIST_OUTPUT_CSV}")
     print(f"  Author crosswalk output CSV: {AUTHOR_CROSSWALK_OUTPUT_CSV}")
     print(f"  Manual review diagnostic CSV: {MANUAL_REVIEW_OUTPUT_CSV}")
 
@@ -342,6 +348,38 @@ def create_author_crosswalk(data: pd.DataFrame) -> pd.DataFrame:
             manual_review_reasons=("manual_review_reasons", join_unique_values),
         )
     )
+
+
+def create_unique_author_list(data: pd.DataFrame) -> pd.DataFrame:
+    columns = ["author_id", "final_last_name", "final_first_name"]
+    author_list = data[columns].copy()
+    for column in columns:
+        author_list[column] = author_list[column].fillna("").astype(str).str.strip()
+
+    author_list = author_list.loc[author_list["author_id"].ne("")].copy()
+    author_list["_name_length"] = (
+        author_list["final_last_name"].str.len()
+        + author_list["final_first_name"].str.len()
+    )
+    author_list = (
+        author_list.sort_values(
+            [
+                "author_id",
+                "_name_length",
+                "final_last_name",
+                "final_first_name",
+            ],
+            ascending=[True, False, True, True],
+            kind="mergesort",
+        )
+        .drop_duplicates(subset="author_id", keep="first")
+        .drop(columns="_name_length")
+        .reset_index(drop=True)
+    )
+
+    if author_list["author_id"].duplicated().any():
+        raise ValueError("author_id is not unique in the author-list output.")
+    return author_list
 
 
 def create_manual_review_data(data: pd.DataFrame) -> pd.DataFrame:

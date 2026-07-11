@@ -1,3 +1,10 @@
+
+# Tech Stack Overview:
+
+Core Python & ML:
+API & Deployment: FastAPI, Pydantic, Uvicorn, Docker, pytest
+
+
 # Has it become harder to break into economics’ leading journals without an established publication record?
 
 Has it become harder for researchers without an established publication record to break into economics’ leading journals? This project examines how entry into the journals commonly known as the “Top Five” has changed over time.^1
@@ -50,12 +57,7 @@ Because 2026 is not yet a complete publication year, observations from 2026 are 
 
 Identify the change in the pattern of economics publications: Has it become harder to break into economics’ leading journals without an established publication record?
 
-## Tech Stack Overview:
-
-Core Python & ML: 
-API & Deployment: FastAPI, Pydantic, Uvicorn, Docker, pytest
-
-## Main Findings
+# Main Findings
 # A growing share of papers include top-ranked authors (Author rankings based on publication count over the preceding 20 years)
 <img src="path_to_graph.png">
 # New authors account for a smaller share of authors over time.
@@ -79,3 +81,17 @@ src/
   econ_pub_concentration/
 tests/
 ```
+
+## Author PhD Enrichment
+
+After author IDs are created, the Step 5 pipeline can use the ORCID Public API
+to enrich the unique author list with PhD institutions and years while
+retaining source evidence and ambiguous cases for review:
+
+```bash
+python src/Step5_EnrichAuthorEducation/01_EnrichAuthorPhD.py --limit 25
+```
+
+See
+[`src/Step5_EnrichAuthorEducation/README.md`](src/Step5_EnrichAuthorEducation/README.md)
+for API setup, confidence rules, resuming a run, and output definitions.
