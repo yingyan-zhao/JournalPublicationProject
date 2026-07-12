@@ -125,33 +125,35 @@ A first-time Top Five author is also not necessarily a junior researcher and may
 
 [^2]: This comparison remains sensitive to team size. As the number of coauthors increases, the probability that at least one team member has prior Top Five experience also rises mechanically. Distinguishing this mechanical effect from a deeper change in the role of experience would require comparing teams of similar sizes or estimating how much of the trend can be explained by changes in coauthorship alone.
 
-### Finding 4: Observed publication gaps are shorter for newer cohorts
+### Finding 4: Observed gaps between Top Five publications have shortened
 
-This figure groups authors by the decade in which they first published in the Top Five and compares the time between each pair of consecutive publications. Two patterns stand out.
+Figure 4 groups authors by the decade of their first Top Five publication and compares the average number of years between consecutive publications. It shows both how publication gaps change as authors accumulate more Top Five papers and how those gaps differ across entry cohorts.
 
-First, within each cohort, the observed waiting time generally becomes shorter as authors accumulate more Top Five publications. The gap from the first to the second publication is usually longer than the gaps between later publications, although the decline is not perfectly smooth at every step. This pattern could reflect learning by doing, more established research teams, several projects moving forward at the same time, or a publication record that gives an author greater visibility and credibility. It also reflects selection: authors who reach their fifth, sixth, or later Top Five publication are likely to be unusually persistent and productive.
+Two patterns stand out. First, within most cohorts, the observed gap tends to become shorter at later publication stages. The interval from the first to the second publication is generally longer than the intervals between later publications. This may reflect learning, established research collaborations, several projects moving through the publication process simultaneously, or the visibility and resources associated with an existing publication record. This pattern also reflects selection. Authors who reach their fifth, sixth, or later Top Five publication are an unusually persistent and productive group. The shorter gaps at later stages therefore do not describe the career trajectory of a typical author. Instead, each successive transition represents a more selected group of repeat publishers.
 
-Second, and more importantly for this project, the same publication step is generally reached faster by newer cohorts. For example, the average gap from the first to the second publication was **5.9 years for the 1981-1990 entry cohort**, **5.6 years for the 1991-2000 cohort**, **4.6 years for the 2001-2010 cohort**, and **3.5 years for the 2011-2020 cohort**. Similar differences appear at later publication stages.
+Second, the same publication transition is generally shorter for newer cohorts. Among authors with an observed second publication, the average gap from the first to the second Top Five paper was 5.9 years for the 1981–1990 entry cohort, 5.6 years for the 1991–2000 cohort, 4.6 years for the 2001–2010 cohort, and 3.5 years for the 2011–2020 cohort. Similar differences appear at several later publication stages. 
 
-This across-cohort pattern is consistent with the possibility that an existing Top Five record provides more momentum, including a stronger reputation advantage, than it did in the past. The graph cannot isolate that channel, however. Changes in coauthorship, team size, research production, the publication process, and the types of authors who continue publishing could also shorten the observed gaps. Recent cohorts have also had less time to produce their next paper, so incomplete follow-up may make their gaps appear shorter.
+These cohort differences could reflect changes in research production, team size, coauthorship, specialization, or the publication process. They are also consistent with prior Top Five success providing greater momentum through accumulated experience, productive collaborations, visibility, or reputational advantages. The figure cannot distinguish among these explanations.
 
-Note that Incomplete follow-up is especially important for later years. Authors in 2011-2020 can be observed for only a few years, so those who take longer to publish a later papers may not yet appear in the calculation. The figure also excludes entrants who never publish a second Top Five paper.
+<figure>
+  <img src="outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort" width="800">
+  <figcaption>Figure 4. Average observed years between consecutive Top Five publications, grouped by the decade of an author’s first Top Five publication. Each transition includes only authors who reach the subsequent publication within the observation period.</figcaption>
+</figure>
 
-[![Publication gaps by entry cohort](outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.png)](outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.html)
+Figure 5 examines the cohort pattern more closely by focusing only on the transition from an author’s first to second Top Five publication. Instead of combining authors into ten-year groups, it reports the average observed gap separately for each year of entry.
 
-*Figure 4. Average observed years between consecutive Top Five publications, grouped by the decade of an author's first Top Five publication. Each transition includes only authors who reach the next publication.*
+Among authors with an observed second publication, the average gap declined from 5.5 years for those entering in 1980 to 2.5 years for those entering in 2020. Although the annual series fluctuates, its broader direction is downward. Recent entrants who publish a second Top Five paper are therefore observed returning more quickly than comparable repeat publishers from earlier entry years.
 
-Figure 5 follows up on the first pattern in Figure 4 by focusing only on the move from an author's first Top Five publication to the second. Instead of grouping authors into ten-year cohorts, it shows the average observed gap separately for each year of entry.
+This pattern may indicate that a first Top Five publication is increasingly followed by additional publication momentum. That momentum could arise through learning, visibility, access to collaborators and feedback, multiple projects already in progress, or reputational advantages. 
 
-The average gap fell from **5.5 years for authors entering in 1980** to **2.5 years for authors entering in 2020**, a decline of approximately **3.0 years**. Although the annual series fluctuates, its broader direction is downward. Among authors for whom a second Top Five publication is observed, recent entrants returned to the Top Five more quickly than entrants in earlier years.
+Incomplete follow-up is particularly important for interpreting both figures. Recent entrants have had less time to publish again, so authors who return quickly are disproportionately represented. Authors with longer gaps may not yet have an observed second publication, while authors who never publish again are excluded entirely. These features can make the average gaps for recent cohorts appear artificially short.
 
-This pattern is consistent with the idea that a first Top Five publication creates momentum for subsequent work. That momentum could come from learning, greater visibility, stronger coauthor opportunities, improved access to feedback and resources, or a reputation advantage. If so, the first publication may have become a more important dividing line between researchers who are outside the Top Five and those who have already entered it. The graph does not determine which of these mechanisms is responsible.
+The narrow conclusion is that, among authors whose subsequent Top Five publications are observed within the sample period, repeat publications occur sooner for more recent entrants. The figures do not establish that the expected time to a subsequent publication has declined for all authors entering the Top Five.
 
-Incomplete follow-up is especially important here. Authors entering in 2020 can be observed for only a few years, so those who take longer to publish a second paper may not yet appear in the calculation. The figure also excludes entrants who never publish a second Top Five paper.
-
-[![Gap between first and second publications](outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.png)](outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.html)
-
-*Figure 5. Average observed years between authors' first and second Top Five publications, shown separately by year of first publication. Only authors with an observed second publication are included.*
+<figure>
+  <img src="outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020" width="800">
+  <figcaption> Figure 5. Average observed years between authors’ first and second Top Five publications, shown separately by year of first publication. Only authors with an observed second publication are included.</figcaption>
+</figure>
 
 ## Differences Across Fields
 
