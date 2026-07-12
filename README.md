@@ -1,4 +1,4 @@
-# Has It Become Harder to Break Into Economics' Leading Journals? -- The Changes of the Pathway into Economics’ Top Five Journals
+# Has It Become Harder to Break Into Economics' Leading Journals? -- Changing Pathways into Economics’ Top Five Journals
 
 ## Overview
 
