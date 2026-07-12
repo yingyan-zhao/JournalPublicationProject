@@ -170,7 +170,7 @@ The size of the increase differs substantially across fields. International econ
 The increase across all ten fields indicates that the aggregate trend is not driven by a single area of economics. Nevertheless, differences in field size, coauthorship practices, specialization, and research-team structure may help explain why concentration increased more in some fields than in others. Because rankings are calculated separately within each field, the figure compares changes in concentration rather than absolute productivity across fields.
 
 <figure>
-  <img src="outputs/figures/overall/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png" width="800">
+  <img src="outputs/figures/by_field/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png" width="800">
   <figcaption> Figure 6. Share of papers with at least one field-specific top-10% author in 1995-2000 and 2020-2025. Rankings are recalculated annually using publication counts in that field during the preceding 20 years.</figcaption>
 </figure>
 
@@ -183,7 +183,7 @@ Quantitative methods was the only exception. Its new-author share increased from
 [^2]: The field-specific percentages are higher than the overall new-author share because they measure entry into individual fields. An author who has previously published in macroeconomics, for example, is still considered new to public economics when first publishing there. The appropriate interpretation is therefore that repeat participation within fields became more prevalent in nine of the ten areas, not that the same proportion of authors were entering the Top Five for the first time.
 
 <figure>
-  <img src="outputs/figures/overall/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.pgn" width="800">
+  <img src="outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.pgn" width="800">
   <figcaption> Figure 7. Share of distinct authors in each field-period who are observed publishing in that field for the first time. Authors are counted once within each field and period.</figcaption>
 </figure>
 
@@ -194,7 +194,7 @@ In all ten fields, a larger share of new authors published with someone who had 
 Solo entry became less common in every field. In 1995–2000, the solo-authored share ranged from approximately 18% to 26%; by 2020–2025, it ranged from approximately 6% to 9%. Entry only with other field newcomers also declined in nine fields. Quantitative methods again differed from the general pattern: its newcomer-only share increased from 32.0% to 38.1%, alongside a comparatively small increase in entry with experienced coauthors. The broad shift toward entering with field-experienced coauthors is therefore not limited to one part of economics. 
 
 <figure>
-  <img src="outputs/figures/overall/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.pgn" width="800">
+  <img src="outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.pgn" width="800">
   <figcaption> Figure 8. Coauthor composition during new authors’ first observed publication year in each field. The mutually exclusive categories are entry with an experienced coauthor, entry only with other field newcomers, and solo-authored entry. Arrows show percentage-point changes from 1995–2000 to 2020–2025.</figcaption>
 </figure>
 
@@ -209,7 +209,7 @@ The consistency across fields is notable, but the limitations affecting the over
 To reduce this incomplete-follow-up problem, I use 2010–2015 as the latest entry cohort rather than a more recent period. Because the data extend through 2026, even authors entering in 2015 have at least 11 years of follow-up. This substantially increases the opportunity to observe a second publication, but it does not eliminate the concern. Authors with unusually long publication gaps may still be missing, while authors who never publish a second paper are excluded by construction. The reported gaps should therefore be interpreted as outcomes among observed repeat publishers rather than as the expected time to a second publication for all entrants.
 
 <figure>
-  <img src="outputs/figures/overall/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png" width="800">
+  <img src="outputs/figures/by_field/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png" width="800">
   <figcaption> Figure 9. Average observed years from an author’s first to second Top Five publication in the same field, comparing the 1995–2000 and 2010–2015 field-entry cohorts. Only authors with an observed second publication in that field are included.</figcaption>
 </figure>
 
