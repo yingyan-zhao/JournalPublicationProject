@@ -151,7 +151,7 @@ Incomplete follow-up is particularly important for interpreting both figures. Re
 The narrow conclusion is that, among authors whose subsequent Top Five publications are observed within the sample period, repeat publications occur sooner for more recent entrants. The figures do not establish that the expected time to a subsequent publication has declined for all authors entering the Top Five.
 
 <figure>
-  <img src="outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020" width="800">
+  <img src="outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.png" width="800">
   <figcaption> Figure 5. Average observed years between authors’ first and second Top Five publications, shown separately by year of first publication. Only authors with an observed second publication are included.</figcaption>
 </figure>
 
@@ -183,7 +183,7 @@ Quantitative methods was the only exception. Its new-author share increased from
 [^2]: The field-specific percentages are higher than the overall new-author share because they measure entry into individual fields. An author who has previously published in macroeconomics, for example, is still considered new to public economics when first publishing there. The appropriate interpretation is therefore that repeat participation within fields became more prevalent in nine of the ten areas, not that the same proportion of authors were entering the Top Five for the first time.
 
 <figure>
-  <img src="outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.pgn" width="800">
+  <img src="outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.png" width="800">
   <figcaption> Figure 7. Share of distinct authors in each field-period who are observed publishing in that field for the first time. Authors are counted once within each field and period.</figcaption>
 </figure>
 
@@ -194,7 +194,7 @@ In all ten fields, a larger share of new authors published with someone who had 
 Solo entry became less common in every field. In 1995–2000, the solo-authored share ranged from approximately 18% to 26%; by 2020–2025, it ranged from approximately 6% to 9%. Entry only with other field newcomers also declined in nine fields. Quantitative methods again differed from the general pattern: its newcomer-only share increased from 32.0% to 38.1%, alongside a comparatively small increase in entry with experienced coauthors. The broad shift toward entering with field-experienced coauthors is therefore not limited to one part of economics. 
 
 <figure>
-  <img src="outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.pgn" width="800">
+  <img src="outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.png" width="800">
   <figcaption> Figure 8. Coauthor composition during new authors’ first observed publication year in each field. The mutually exclusive categories are entry with an experienced coauthor, entry only with other field newcomers, and solo-authored entry. Arrows show percentage-point changes from 1995–2000 to 2020–2025.</figcaption>
 </figure>
 
