@@ -141,7 +141,7 @@ Second, the same publication transition is generally shorter for newer cohorts. 
 These cohort differences could reflect changes in research production, team size, coauthorship, specialization, or the publication process. They are also consistent with prior Top Five success providing greater momentum through accumulated experience, productive collaborations, visibility, or reputational advantages. The figure cannot distinguish among these explanations.
 
 <figure>
-  <img src="outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort" width="800">
+  <img src="outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.png" width="800">
   <figcaption>Figure 4. Average observed years between consecutive Top Five publications, grouped by the decade of an author’s first Top Five publication. Each transition includes only authors who reach the subsequent publication within the observation period.</figcaption>
 </figure>
 
