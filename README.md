@@ -1,4 +1,4 @@
-# Who Publishes in Economics’ Top Five? Experience, Entry, and Coauthorship over Time
+# Has It Become Harder to Break Into Economics' Leading Journals? -- The Changes of the Pathway into Economics’ Top Five Journals
 
 ## Overview
 
@@ -157,51 +157,63 @@ The narrow conclusion is that, among authors whose subsequent Top Five publicati
 
 ## Differences Across Fields
 
-The overall patterns could conceal important differences across areas of economics. This section repeats four comparisons for top ten broad JEL fields: C, D, E, F, G, H, I, J, L, and O (based on the number of publised papers in each classification). A paper with several broad JEL codes enters every applicable field, so field counts overlap and should not be added together. The overall results show that all fields have very similar patterns as the overall pattern.
+The aggregate findings may conceal important differences across areas of economics. I therefore repeat four comparisons for the ten broad JEL fields with the largest numbers of Top Five papers: C, D, E, F, G, H, I, J, L, and O, which are the top 10 fields with largest publications in top five journals. Field assignments use observed JEL codes when available and model-generated classifications otherwise. Because a paper may have several broad JEL codes, it contributes to every applicable field. Field counts consequently overlap and should not be added together.
 
-The field analysis also uses a narrower definition of entry than the overall analysis. A "new author" is an author publishing in the indicated field for the first time observed in this dataset, even if that author previously published a Top Five paper in another field. Similarly, an "experienced coauthor" has an earlier observed Top Five publication in the same field. These definitions show movement into and persistence within fields rather than entry into the Top Five as a whole.
+The definitions in this section are field-specific. A top-ranked author is ranked using publications in the relevant field during the preceding 20 years. A new author is someone publishing in that field for the first time observed in the data, even if the author has previously published a Top Five paper in another field. Similarly, an experienced coauthor has an earlier Top Five publication in the same field. These measures describe entry and persistence within fields rather than entry into the Top Five as a whole.
+The broad patterns found in the aggregate analysis recur across most fields, although their magnitudes vary.
 
 ### Field Finding 1: Concentration increased in every major field
 
-The share of papers with at least one field-specific top-10% author increased in all ten fields between 1995-2000 and 2020-2025. The recent share is approximately **40% or 41%** in microeconomics, macroeconomics, quantitative methods, international economics, and labor economics. Industrial organization has the lowest recent share at **23.5%**, followed by financial economics at **30.5%**.
+The share of papers with at least one field-specific top-10% author increased in all ten fields between 1995–2000 and 2020–2025. In the recent period, this share reached approximately 40% or 41% in microeconomics, macroeconomics, quantitative methods, international economics, and labor economics. Industrial organization had the lowest recent share at 23.5%, followed by financial economics at 30.5%.
 
-The size of the increase varies substantially. International economics and public economics each rose by about **20 percentage points**, while labor economics and development and growth rose by approximately **19 points**. Quantitative methods started with the highest earlier-period concentration and changed comparatively little, increasing from **38.4% to 40.3%**. The fact that concentration rises in every field suggests that the aggregate trend is not driven by one area of economics.
+The size of the increase differs substantially across fields. International economics and public economics each rose by approximately 20 percentage points, while labor economics and development and growth increased by about 19 points. Quantitative methods began with the highest concentration and changed comparatively little, increasing from 38.4% to 40.3%.
+The increase across all ten fields indicates that the aggregate trend is not driven by a single area of economics. Nevertheless, differences in field size, coauthorship practices, specialization, and research-team structure may help explain why concentration increased more in some fields than in others. Because rankings are calculated separately within each field, the figure compares changes in concentration rather than absolute productivity across fields.
 
-[![Field-specific share of papers with a top-ranked author](outputs/figures/by_field/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png)](outputs/figures/by_field/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png)
-
-*Figure 6. Share of papers with at least one field-specific top-10% author in 1995-2000 and 2020-2025. Rankings are recalculated annually using publication counts in that field during the preceding 20 years. Ties at the cutoff are included.*
+<figure>
+  <img src="outputs/figures/overall/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png" width="800">
+  <figcaption> Figure 6. Share of papers with at least one field-specific top-10% author in 1995-2000 and 2020-2025. Rankings are recalculated annually using publication counts in that field during the preceding 20 years.</figcaption>
+</figure>
 
 ### Field Finding 2: New-author shares declined in most fields
 
-The share of active authors who were new to a field fell in nine of the ten fields. The largest decline appears in health, education, and welfare, where the share fell from **92.8% to 72.8%**. Development and growth declined from **86.2% to 69.4%**, while public economics declined from **84.1% to 74.1%**. Macroeconomics changed little, falling by approximately **1.2 percentage points**.
+The share of authors who were new to a field declined in nine of the ten fields. The largest decrease occurred in health, education, and welfare, where the share fell from 92.8% to 72.8%. Development and growth declined from 86.2% to 69.4%, while public economics declined from 84.1% to 74.1%. Macroeconomics changed comparatively little, falling by approximately 1.2 percentage points.
 
-Quantitative methods is the only exception: its new-author share increased from **60.4% to 64.8%**. This exception is useful because it shows that the overall decline is not mechanically imposed by the method. Field entry remains common in every area, but repeat participants make up a larger share of authors in most fields than they did in the earlier period.
+Quantitative methods was the only exception. Its new-author share increased from 60.4% to 64.8%. This exception shows that a declining new-author share is not mechanically produced by the way the measure is constructed.[^2]
 
-These percentages are higher than the overall new-author share because they measure entry into a field. An author who previously published in macroeconomics, for example, is still new to public economics when first appearing there.
+[^2]: The field-specific percentages are higher than the overall new-author share because they measure entry into individual fields. An author who has previously published in macroeconomics, for example, is still considered new to public economics when first publishing there. The appropriate interpretation is therefore that repeat participation within fields became more prevalent in nine of the ten areas, not that the same proportion of authors were entering the Top Five for the first time.
 
-[![Field-specific new-author shares](outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.png)](outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.png)
-
-*Figure 7. Share of distinct authors in each field-period who are observed publishing in that field for the first time. Authors are counted once within each field and period.*
+<figure>
+  <img src="outputs/figures/overall/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.pgn" width="800">
+  <figcaption> Figure 7. Share of distinct authors in each field-period who are observed publishing in that field for the first time. Authors are counted once within each field and period.</figcaption>
+</figure>
 
 ### Field Finding 3: Entry increasingly involves field-experienced coauthors
 
-In all ten fields, a larger share of new authors entered with someone who had previously published in that field. The increase ranges from **6.8 percentage points** in quantitative methods to **40.1 points** in health, education, and welfare. Large increases also appear in public economics (**35.9 points**), development and growth (**33.1 points**), and labor economics (**32.9 points**).
+In all ten fields, a larger share of new authors published with someone who had previously published in the same field. The increase ranged from 6.8 percentage points in quantitative methods to 40.1 points in health, education, and welfare. Large increases also occurred in public economics (35.9 points), development and growth (33.1 points), and labor economics (32.9 points).
 
-Solo entry became less common in every field. In 1995-2000, the solo-authored share ranged from approximately **18% to 26%**; by 2020-2025, it ranged from approximately **6% to 9%**. Entry only with other newcomers also declined in nine fields. Quantitative methods again differs: its newcomer-only share increased from **32.0% to 38.1%**, alongside a smaller increase in entry with experienced coauthors. The broad shift is toward entering a field through collaboration with someone who already has field-specific Top Five experience.
+Solo entry became less common in every field. In 1995–2000, the solo-authored share ranged from approximately 18% to 26%; by 2020–2025, it ranged from approximately 6% to 9%. Entry only with other field newcomers also declined in nine fields. Quantitative methods again differed from the general pattern: its newcomer-only share increased from 32.0% to 38.1%, alongside a comparatively small increase in entry with experienced coauthors. The broad shift toward entering with field-experienced coauthors is therefore not limited to one part of economics. 
 
-[![Field-specific coauthor composition of new authors](outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.png)](outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.png)
+<figure>
+  <img src="outputs/figures/overall/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.pgn" width="800">
+  <figcaption> Figure 8. Coauthor composition during new authors’ first observed publication year in each field. The mutually exclusive categories are entry with an experienced coauthor, entry only with other field newcomers, and solo-authored entry. Arrows show percentage-point changes from 1995–2000 to 2020–2025.</figcaption>
+</figure>
 
-*Figure 8. Coauthor composition during new authors' first observed publication year in each field. The three mutually exclusive categories are entry with an experienced coauthor, entry only with other field newcomers, and solo-authored entry. Arrows show percentage-point changes from 1995-2000 to 2020-2025.*
+### Field Finding 4: Observed gaps to a second publication shortened in every field
 
-### Field Finding 4: Observed return times shortened in every field
+Among authors with an observed second publication in the same field, the average gap from the first to the second publication was shorter for the 2010–2015 entry cohort than for the 1995–2000 cohort in all ten fields. For the earlier cohort, the average gaps ranged from 5.2 years in international economics to 8.0 years in industrial organization. For the later cohort, they ranged from 3.6 years in health, education, and welfare to 4.9 years in financial economics.
 
-Among authors with an observed second publication in the same field, the average gap from the first to the second publication is shorter for the 2010-2015 entry cohort than for the 1995-2000 cohort in every field. For the earlier cohort, average gaps range from **5.2 years** in international economics to **8.0 years** in industrial organization. For the later cohort, they range from **3.6 years** in health, education, and welfare to **4.9 years** in financial economics.
+The largest decline occurred in industrial organization, where the observed average fell from 8.0 to 4.4 years. Quantitative methods declined from 7.3 to 4.5 years, while health, education, and welfare declined from 6.3 to 3.6 years. International economics changed the least, moving from 5.2 to 4.7 years.
 
-The largest decline appears in industrial organization, where the observed average falls from **8.0 to 4.4 years**. Quantitative methods declines from **7.3 to 4.5 years**, and health, education, and welfare declines from **6.3 to 3.6 years**. International economics changes least, moving from **5.2 to 4.7 years**.
+The consistency across fields is notable, but the limitations affecting the overall comparison remain. The calculation includes only authors with an observed second publication in the same field, and more recent entrants have a shorter period in which that publication can be observed.
 
-[![Field-specific gap from first to second publication](outputs/figures/by_field/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png)](outputs/figures/by_field/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png)
+To reduce this incomplete-follow-up problem, I use 2010–2015 as the latest entry cohort rather than a more recent period. Because the data extend through 2026, even authors entering in 2015 have at least 11 years of follow-up. This substantially increases the opportunity to observe a second publication, but it does not eliminate the concern. Authors with unusually long publication gaps may still be missing, while authors who never publish a second paper are excluded by construction. The reported gaps should therefore be interpreted as outcomes among observed repeat publishers rather than as the expected time to a second publication for all entrants.
 
-*Figure 9. Average observed years from an author's first to second Top Five publication in the same field, comparing the 1995-2000 and 2010-2015 field-entry cohorts. Only authors with an observed second publication in that field are included.*
+<figure>
+  <img src="outputs/figures/overall/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png" width="800">
+  <figcaption> Figure 9. Average observed years from an author’s first to second Top Five publication in the same field, comparing the 1995–2000 and 2010–2015 field-entry cohorts. Only authors with an observed second publication in that field are included.</figcaption>
+</figure>
+
+Taken together, the field comparisons show that the aggregate changes are broadly distributed across economics rather than being driven by one specialty. Concentration increased in every field, new-author shares declined in most fields, entry increasingly involved field-experienced coauthors, and observed publication gaps shortened across all ten areas. The quantitative-methods field provides the clearest exception to parts of this general pattern, underscoring that the magnitude and form of these changes differ across areas.
 
 ## Interpretation and Limitations
 
