@@ -117,6 +117,17 @@
     .end-label {
       font-size: 12px;
     }
+    .annotation {
+      fill: var(--muted-foreground);
+      font-family: inherit;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    .annotation-line {
+      stroke: var(--muted-foreground);
+      stroke-width: 1;
+      pointer-events: none;
+    }
     .series-line {
       fill: none;
       stroke-linecap: round;
@@ -186,7 +197,7 @@
 <body>
   <main id="top-author-share-chart" class="chart">
     <h1>A growing share of papers include top-ranked authors</h1>
-    <p class="subtitle">JEL I &middot; Author rankings based on publication count over the preceding 20 years</p>
+    <p class="subtitle">JEL I · Top 1%, 5%, and 10% calculated within this field over the preceding 20 years</p>
     <div class="legend" aria-label="Choose the emphasized author group">
       <button type="button" data-series="1" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-1)"></span>Top 1% of authors</button>
       <button type="button" data-series="5" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-5)"></span>Top 5% of authors</button>
@@ -201,6 +212,7 @@
   <script>
     (() => {
       const series = {"1":[[1980,0.0],[1981,0.0],[1982,0.0],[1983,0.0],[1984,0.0],[1985,0.0],[1986,0.0],[1987,0.0],[1988,0.0],[1989,0.0],[1990,0.0],[1991,0.0],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.0],[1996,0.0],[1997,0.0],[1998,0.0],[1999,0.041667],[2000,0.04],[2001,0.064516],[2002,0.038462],[2003,0.073171],[2004,0.071429],[2005,0.055556],[2006,0.02381],[2007,0.057143],[2008,0.045455],[2009,0.102041],[2010,0.113208],[2011,0.113636],[2012,0.097561],[2013,0.075472],[2014,0.050847],[2015,0.136986],[2016,0.117647],[2017,0.073171],[2018,0.111111],[2019,0.052632],[2020,0.107143],[2021,0.109091],[2022,0.096774],[2023,0.039216],[2024,0.063492],[2025,0.121622],[2026,0.0]],"5":[[1980,0.0],[1981,0.0],[1982,0.0],[1983,0.0],[1984,0.0],[1985,0.0],[1986,0.0],[1987,0.0],[1988,0.0],[1989,0.0],[1990,0.0],[1991,0.333333],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.1],[1996,0.0],[1997,0.0],[1998,0.333333],[1999,0.25],[2000,0.08],[2001,0.096774],[2002,0.192308],[2003,0.097561],[2004,0.119048],[2005,0.277778],[2006,0.166667],[2007,0.2],[2008,0.272727],[2009,0.183673],[2010,0.207547],[2011,0.159091],[2012,0.243902],[2013,0.150943],[2014,0.254237],[2015,0.260274],[2016,0.282353],[2017,0.195122],[2018,0.177778],[2019,0.105263],[2020,0.232143],[2021,0.181818],[2022,0.16129],[2023,0.215686],[2024,0.206349],[2025,0.297297],[2026,0.28]],"10":[[1980,0.0],[1981,0.0],[1982,0.0],[1983,0.0],[1984,0.0],[1985,0.0],[1986,0.0],[1987,0.0],[1988,0.0],[1989,0.0],[1990,0.4],[1991,0.333333],[1992,0.0],[1993,0.0],[1994,0.166667],[1995,0.1],[1996,0.230769],[1997,0.125],[1998,0.5],[1999,0.25],[2000,0.12],[2001,0.16129],[2002,0.230769],[2003,0.268293],[2004,0.333333],[2005,0.407407],[2006,0.309524],[2007,0.342857],[2008,0.318182],[2009,0.22449],[2010,0.264151],[2011,0.25],[2012,0.317073],[2013,0.226415],[2014,0.338983],[2015,0.356164],[2016,0.364706],[2017,0.280488],[2018,0.377778],[2019,0.263158],[2020,0.517857],[2021,0.345455],[2022,0.241935],[2023,0.372549],[2024,0.285714],[2025,0.432432],[2026,0.28]]};
+      const showAnnotation = false;
       const root = document.getElementById("top-author-share-chart");
       const svg = root.querySelector(".chart-svg");
       const tooltip = root.querySelector(".tooltip");
@@ -226,7 +238,6 @@
         svg.appendChild(node);
         return node;
       };
-
       for (let value = 0; value <= tickMax + .0001; value += .1) {
         const position = y(value);
         add("line", { class: "grid-line", x1: margin.left, x2: plotRight, y1: position, y2: position });
@@ -251,6 +262,12 @@
         const lastPoint = series[key][series[key].length - 1];
         add("text", { class: "end-label", x: x(lastPoint[0]) + 8, y: y(lastPoint[1]) + 4 }, `Top ${key}%`);
       });
+      if (showAnnotation) {
+        const target = series["10"].find(point => point[0] === 2025) ?? series["10"][series["10"].length - 1];
+        add("line", { class: "annotation-line", x1: x(2016), y1: y(0.55), x2: x(target[0]), y2: y(target[1]) });
+        add("text", { class: "annotation", x: x(1997), y: y(0.585) }, "The share of papers with a top-10% author");
+        add("text", { class: "annotation", x: x(1997), y: y(0.565) }, "rose from 28% in 1980 to 46% in 2025.");
+      }
 
       let selectedSeries = "10";
       const activate = key => {

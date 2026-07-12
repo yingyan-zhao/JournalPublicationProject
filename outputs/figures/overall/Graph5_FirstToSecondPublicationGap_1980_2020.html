@@ -151,13 +151,13 @@
 <body>
   <main id="first-to-second-gap-chart" class="chart">
     <h1>The observed gap to a second top-five publication has narrowed</h1>
-    <p class="subtitle">Average years between authors&#x27; first and second top-five publications, by year of first publication</p>
+    <p class="subtitle">Average years between authors&#x27; first and second publications in the Top Five, by year of first publication in the Top Five</p>
     <svg class="chart-svg" viewBox="0 0 900 520" role="img" aria-labelledby="chart-title chart-description">
-      <title id="chart-title">Average years between first and second top-five publications</title>
+      <title id="chart-title">Average years between first and second publications in the Top Five</title>
       <desc id="chart-description">Hover over the line to inspect the first-publication year, average gap to a second publication, and number of authors.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> Cohorts are defined by the year of an author&rsquo;s first top-five publication. Values show the mean observed time to a second top-five publication. Recent cohorts may have incomplete follow-up.</p>
+    <p class="note"><strong>Note:</strong> Cohorts are defined by the year of an author&rsquo;s first publication in the Top Five. Values show the mean observed time to a second publication in the Top Five. Recent cohorts may have incomplete follow-up.</p>
   </main>
   <script>
     (() => {
@@ -207,8 +207,8 @@
       });
       add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
       add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
-      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Year of first top-five publication");
-      add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Years between first and second publication");
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Year of first publication in the Top Five");
+      add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Years between first and second publication in the Top Five");
 
       const path = data.map(([year, gap], index) => `${index ? "L" : "M"}${x(year).toFixed(2)},${y(gap).toFixed(2)}`).join(" ");
       const gapLine = add("path", { class: "gap-line", d: path, "clip-path": "url(#graph5-plot-clip)" });

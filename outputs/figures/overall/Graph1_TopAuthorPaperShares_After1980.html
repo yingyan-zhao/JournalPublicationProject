@@ -197,7 +197,7 @@
 <body>
   <main id="top-author-share-chart" class="chart">
     <h1>A growing share of papers include top-ranked authors</h1>
-    <p class="subtitle">All fields &middot; Author rankings based on publication count over the preceding 20 years</p>
+    <p class="subtitle">All fields · Author rankings calculated across all fields over the preceding 20 years</p>
     <div class="legend" aria-label="Choose the emphasized author group">
       <button type="button" data-series="1" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-1)"></span>Top 1% of authors</button>
       <button type="button" data-series="5" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-5)"></span>Top 5% of authors</button>
@@ -238,7 +238,6 @@
         svg.appendChild(node);
         return node;
       };
-
       for (let value = 0; value <= tickMax + .0001; value += .1) {
         const position = y(value);
         add("line", { class: "grid-line", x1: margin.left, x2: plotRight, y1: position, y2: position });

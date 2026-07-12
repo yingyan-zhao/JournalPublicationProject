@@ -6,13 +6,22 @@ Has it become harder for researchers without an established publication record t
 
 A Top Five publication is widely viewed as an important marker of research success in economics. Publication outcomes are likely to reflect genuine differences in research quality, ability, experience, persistence, and access to productive collaborators and feedback. Established scholars may produce stronger work because they have accumulated knowledge, learned how to identify promising questions, and developed more effective research processes.
 
-Prior success may also create advantages that extend beyond research ability alone. Reputation can increase a paper's visibility, facilitate collaboration, and provide access to professional networks and institutional resources. Editors and referees may also treat an author's publication record as a signal of quality when evaluating uncertain or highly specialized work. These mechanisms need not involve deliberate favoritism, and publication data alone cannot distinguish them from the effects of experience and skill.
+Prior success may also create advantages that extend beyond research ability alone. Reputation can increase a paper's visibility, facilitate coauthorship with experienced authors, and improve access to institutional resources. Editors and referees may also treat an author's publication record as a signal of quality when evaluating uncertain or highly specialized work. The publication data directly measure coauthorship patterns, not professional networks or editorial perceptions, and cannot distinguish these mechanisms from the effects of experience and skill.
 
 I therefore treat the analysis as descriptive rather than causal. The project asks whether publication in the Top Five has become more concentrated among experienced authors and whether first-time authors increasingly enter through collaboration with scholars who already have a Top Five publication.
 
 [^1]: The conventional Top Five journals in economics are the *American Economic Review*, *Econometrica*, *Journal of Political Economy*, *Quarterly Journal of Economics*, and *Review of Economic Studies*.
 
-## Data and Methods
+## Data and Technical Stack
+
+### Technical Stack
+
+- **Data collection:** Python, Requests, Beautiful Soup, OpenAlex API, and Crossref API
+- **Data processing and record linkage:** pandas, NumPy, DOI normalization, exact matching, and fuzzy name matching
+- **Machine learning:** scikit-learn, TF-IDF, logistic regression, PyTorch, Hugging Face Transformers, SPECTER2, and SciBERT
+- **Visualization:** Matplotlib and custom interactive HTML/CSS/JavaScript charts
+- **Testing and version control:** pytest, Git, and GitHub
+
 
 ### Data Sources
 
@@ -62,11 +71,11 @@ How have entry, persistence, and the concentration of authorship in economics' T
 
 ## Preliminary Main Findings
 
-Each figure links to its companion HTML file. Download and open that file locally to use the interactive hover details.
-
 ### Finding 1: Top-ranked authors appear on a growing share of papers
 
-The share of papers with at least one author ranked in the preceding 20-year top 10% increased from **27.8% in 1980 to 46.4% in 2025**. The corresponding share increased from **3.4% to 12.9%** for the top 1% and from **18.4% to 29.7%** for the top 5%. By this measure, authorship has become increasingly concentrated around scholars with strong recent Top Five publication records.
+The share of papers with at least one author ranked in the preceding 20-year top 10% increased from **27.8% in 1980 to 46.4% in 2025**. The corresponding share increased from **3.4% to 12.9%** for the top 1% and from **18.4% to 29.7%** for the top 5%. By this measure, authorship has become more concentrated around scholars with strong recent Top Five publication records than in the past.
+
+This could reflect greater persistence among productive researchers, increasing coauthorship, larger research teams, or more collaboration between experienced and newer authors. The figure does not reveal why the pattern changed, and it does not show that editors favor established authors or that experienced authors have displaced newcomers.
 
 [![Share of papers with a top-ranked author](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.html)
 
@@ -74,57 +83,108 @@ The share of papers with at least one author ranked in the preceding 20-year top
 
 ### Finding 2: New authors account for a smaller share of authors
 
-New authors represented **44.9% of authors publishing in 1980** and **35.9% in 2025**. The annual series fluctuates, but its long-run direction is downward. This finding concerns the composition of authors, not the number of new authors, which can increase as both the number of papers and average team size grow.
+This figure looks at all authors appearing in the Top Five in a given year and asks what share are publishing there for the first time. In 1980, new authors accounted for **44.9%** of authors. By 2025, their share had fallen to **35.9%**, a decline of about 9 percentage points. The series moves up and down from year to year, but the broader pattern is that repeat authors make up a larger part of the Top Five author pool than they did in the past.
+
+The declining share does not mean that fewer new authors are publishing in absolute terms. The number of new authors increased from **209 in 1980 to 392 in 2025**, while the total number of authors grew even faster. The figure is therefore best understood as a change in composition: the Top Five expanded, but a smaller proportion of participating authors were first-time entrants.
+
+Several developments could contribute to this pattern, including larger author teams, longer publishing careers, and more repeat publication by experienced scholars.
 
 [![Annual share of authors who are new](outputs/figures/overall/Graph2_1_NewAuthorCountShare_1980_2025.png)](outputs/figures/overall/Graph2_1_NewAuthorShare_1980_2025.html)
 
-*Figure 2. Share of authors whose first observed Top Five publication occurs in each year.*
+*Figure 2. Percentage of authors in each year who are publishing in the Top Five for the first time observed in this dataset. The observation window begins in 1950.*
 
 ### Finding 3: New authors increasingly publish with experienced coauthors
 
-Among authors entering the Top Five, the share whose first publication included at least one experienced coauthor increased from **27.3% in 1980 to 76.8% in 2025**. Over the same period, the solo-authored share fell from **48.8% to 6.9%**, while the share publishing only with other new authors declined from **23.9% to 16.3%**. Entry has therefore become much more closely associated with collaboration with authors who already have Top Five experience.
+This figure separates new authors into three groups according to how they first appear in the Top Five: with at least one coauthor who has published there before, only with other newcomers, or alone. In 1980, **27.3%** of new authors published with an experienced coauthor. By 2025, that share had reached **76.8%**, rising from a little more than one in four new authors to more than three in four.
+
+The other two paths became less common. The share entering through solo-authored work fell from **48.8% to 6.9%**, while the share publishing only with other new authors declined from **23.9% to 16.3%**. The typical path into the Top Five has therefore shifted away from entering alone and toward entering as part of a team that already includes Top Five experience.
+
+Experienced coauthors may contribute knowledge, feedback, complementary skills, or familiarity with producing research for leading journals. Coauthorship with established ones undoubtedly provides a large advantage, especially for junior researchers. This advantage becomes more and more dominant in recent years, while researches from less established authors without connection to established coauthors become harder and harder to break into the elite publication.
+
 
 [![Coauthor composition of new authors' first publications](outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.png)](outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.html)
 
-*Figure 3. Coauthor composition of new authors' first Top Five publications. The three categories are mutually exclusive.*
+*Figure 3. Coauthor composition during each new author's first observed year in the Top Five. The categories are mutually exclusive: at least one experienced coauthor, only new coauthors, or solo-authored.*
 
 ### Finding 4: Observed publication gaps are shorter for newer cohorts
 
-Among authors who publish at least twice in the Top Five, the mean observed gap between the first and second publication declined from **5.9 years for the 1981-1990 entry cohort** to **3.5 years for the 2011-2020 cohort**. Later publication gaps are also generally shorter for newer cohorts. These comparisons are conditional on reaching the relevant publication number and should not be interpreted as unconditional career persistence rates.
+This figure groups authors by the decade in which they first published in the Top Five and compares the time between each pair of consecutive publications. Two patterns stand out.
+
+First, within each cohort, the observed waiting time generally becomes shorter as authors accumulate more Top Five publications. The gap from the first to the second publication is usually longer than the gaps between later publications, although the decline is not perfectly smooth at every step. This pattern could reflect learning by doing, more established research teams, several projects moving forward at the same time, or a publication record that gives an author greater visibility and credibility. It also reflects selection: authors who reach their fifth, sixth, or later Top Five publication are likely to be unusually persistent and productive.
+
+Second, and more importantly for this project, the same publication step is generally reached faster by newer cohorts. For example, the average gap from the first to the second publication was **5.9 years for the 1981-1990 entry cohort**, **5.6 years for the 1991-2000 cohort**, **4.6 years for the 2001-2010 cohort**, and **3.5 years for the 2011-2020 cohort**. Similar differences appear at later publication stages.
+
+This across-cohort pattern is consistent with the possibility that an existing Top Five record provides more momentum, including a stronger reputation advantage, than it did in the past. The graph cannot isolate that channel, however. Changes in coauthorship, team size, research production, the publication process, and the types of authors who continue publishing could also shorten the observed gaps. Recent cohorts have also had less time to produce their next paper, so incomplete follow-up may make their gaps appear shorter.
+
+Note that Incomplete follow-up is especially important for later years. Authors in 2011-2020 can be observed for only a few years, so those who take longer to publish a later papers may not yet appear in the calculation. The figure also excludes entrants who never publish a second Top Five paper.
 
 [![Publication gaps by entry cohort](outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.png)](outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.html)
 
-*Figure 4. Mean years between consecutive Top Five publications by cohort of first publication.*
+*Figure 4. Average observed years between consecutive Top Five publications, grouped by the decade of an author's first Top Five publication. Each transition includes only authors who reach the next publication.*
 
-### Finding 5: The observed gap to a second publication has narrowed
+Figure 5 follows up on the first pattern in Figure 4 by focusing only on the move from an author's first Top Five publication to the second. Instead of grouping authors into ten-year cohorts, it shows the average observed gap separately for each year of entry.
 
-The mean observed time from an author's first to second Top Five publication fell from **5.5 years for authors entering in 1980** to **2.5 years for authors entering in 2020**, a decline of approximately **3.0 years**. This result is consistent with faster repeat publication among recent entrants, but right-censoring is important: recent cohorts have had less time to produce a second publication.
+The average gap fell from **5.5 years for authors entering in 1980** to **2.5 years for authors entering in 2020**, a decline of approximately **3.0 years**. Although the annual series fluctuates, its broader direction is downward. Among authors for whom a second Top Five publication is observed, recent entrants returned to the Top Five more quickly than entrants in earlier years.
+
+This pattern is consistent with the idea that a first Top Five publication creates momentum for subsequent work. That momentum could come from learning, greater visibility, stronger coauthor opportunities, improved access to feedback and resources, or a reputation advantage. If so, the first publication may have become a more important dividing line between researchers who are outside the Top Five and those who have already entered it. The graph does not determine which of these mechanisms is responsible.
+
+Incomplete follow-up is especially important here. Authors entering in 2020 can be observed for only a few years, so those who take longer to publish a second paper may not yet appear in the calculation. The figure also excludes entrants who never publish a second Top Five paper.
 
 [![Gap between first and second publications](outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.png)](outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.html)
 
-*Figure 5. Mean observed years between authors' first and second Top Five publications, by year of first publication.*
+*Figure 5. Average observed years between authors' first and second Top Five publications, shown separately by year of first publication. Only authors with an observed second publication are included.*
+
+## Differences Across Fields
+
+The overall patterns could conceal important differences across areas of economics. This section repeats four comparisons for top ten broad JEL fields: C, D, E, F, G, H, I, J, L, and O (based on the number of publised papers in each classification). A paper with several broad JEL codes enters every applicable field, so field counts overlap and should not be added together. The overall results show that all fields have very similar patterns as the overall pattern.
+
+The field analysis also uses a narrower definition of entry than the overall analysis. A "new author" is an author publishing in the indicated field for the first time observed in this dataset, even if that author previously published a Top Five paper in another field. Similarly, an "experienced coauthor" has an earlier observed Top Five publication in the same field. These definitions show movement into and persistence within fields rather than entry into the Top Five as a whole.
+
+### Field Finding 1: Concentration increased in every major field
+
+The share of papers with at least one field-specific top-10% author increased in all ten fields between 1995-2000 and 2020-2025. The recent share is approximately **40% or 41%** in microeconomics, macroeconomics, quantitative methods, international economics, and labor economics. Industrial organization has the lowest recent share at **23.5%**, followed by financial economics at **30.5%**.
+
+The size of the increase varies substantially. International economics and public economics each rose by about **20 percentage points**, while labor economics and development and growth rose by approximately **19 points**. Quantitative methods started with the highest earlier-period concentration and changed comparatively little, increasing from **38.4% to 40.3%**. The fact that concentration rises in every field suggests that the aggregate trend is not driven by one area of economics.
+
+[![Field-specific share of papers with a top-ranked author](outputs/figures/by_field/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png)](outputs/figures/by_field/Graph1_FieldTop10AuthorShares_1995_2000_vs_2020_2025.png)
+
+*Figure 6. Share of papers with at least one field-specific top-10% author in 1995-2000 and 2020-2025. Rankings are recalculated annually using publication counts in that field during the preceding 20 years. Ties at the cutoff are included.*
+
+### Field Finding 2: New-author shares declined in most fields
+
+The share of active authors who were new to a field fell in nine of the ten fields. The largest decline appears in health, education, and welfare, where the share fell from **92.8% to 72.8%**. Development and growth declined from **86.2% to 69.4%**, while public economics declined from **84.1% to 74.1%**. Macroeconomics changed little, falling by approximately **1.2 percentage points**.
+
+Quantitative methods is the only exception: its new-author share increased from **60.4% to 64.8%**. This exception is useful because it shows that the overall decline is not mechanically imposed by the method. Field entry remains common in every area, but repeat participants make up a larger share of authors in most fields than they did in the earlier period.
+
+These percentages are higher than the overall new-author share because they measure entry into a field. An author who previously published in macroeconomics, for example, is still new to public economics when first appearing there.
+
+[![Field-specific new-author shares](outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.png)](outputs/figures/by_field/Graph2_FieldNewAuthorShares_1995_2000_vs_2020_2025.png)
+
+*Figure 7. Share of distinct authors in each field-period who are observed publishing in that field for the first time. Authors are counted once within each field and period.*
+
+### Field Finding 3: Entry increasingly involves field-experienced coauthors
+
+In all ten fields, a larger share of new authors entered with someone who had previously published in that field. The increase ranges from **6.8 percentage points** in quantitative methods to **40.1 points** in health, education, and welfare. Large increases also appear in public economics (**35.9 points**), development and growth (**33.1 points**), and labor economics (**32.9 points**).
+
+Solo entry became less common in every field. In 1995-2000, the solo-authored share ranged from approximately **18% to 26%**; by 2020-2025, it ranged from approximately **6% to 9%**. Entry only with other newcomers also declined in nine fields. Quantitative methods again differs: its newcomer-only share increased from **32.0% to 38.1%**, alongside a smaller increase in entry with experienced coauthors. The broad shift is toward entering a field through collaboration with someone who already has field-specific Top Five experience.
+
+[![Field-specific coauthor composition of new authors](outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.png)](outputs/figures/by_field/Graph3_FieldNewAuthorCoauthorComposition_1995_2000_vs_2020_2025.png)
+
+*Figure 8. Coauthor composition during new authors' first observed publication year in each field. The three mutually exclusive categories are entry with an experienced coauthor, entry only with other field newcomers, and solo-authored entry. Arrows show percentage-point changes from 1995-2000 to 2020-2025.*
+
+### Field Finding 4: Observed return times shortened in every field
+
+Among authors with an observed second publication in the same field, the average gap from the first to the second publication is shorter for the 2010-2015 entry cohort than for the 1995-2000 cohort in every field. For the earlier cohort, average gaps range from **5.2 years** in international economics to **8.0 years** in industrial organization. For the later cohort, they range from **3.6 years** in health, education, and welfare to **4.9 years** in financial economics.
+
+The largest decline appears in industrial organization, where the observed average falls from **8.0 to 4.4 years**. Quantitative methods declines from **7.3 to 4.5 years**, and health, education, and welfare declines from **6.3 to 3.6 years**. International economics changes least, moving from **5.2 to 4.7 years**.
+
+[![Field-specific gap from first to second publication](outputs/figures/by_field/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png)](outputs/figures/by_field/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png)
+
+*Figure 9. Average observed years from an author's first to second Top Five publication in the same field, comparing the 1995-2000 and 2010-2015 field-entry cohorts. Only authors with an observed second publication in that field are included.*
 
 ## Interpretation and Limitations
 
-The findings consistently show that prior Top Five experience has become more closely associated with authorship and entry. They do **not**, by themselves, show that reputation causes publication success or that editorial decisions are biased. Several alternative mechanisms could generate the same patterns, including increasing team size, greater specialization, rising research complexity, changes in the submission pool, and shifts in the distribution of research ability.
-
-The analysis also has five important measurement limitations:
-
-1. It observes published papers rather than submissions, rejections, or acceptance probabilities.
-2. Authors whose careers began before 1950 may be incorrectly classified as new near the beginning of the sample.
-3. Recent cohorts are right-censored, especially in analyses of repeat publication.
-4. Name-based author disambiguation may retain false matches or missed matches.
-5. Field analyses partly rely on model-predicted JEL categories.
-
-The defensible conclusion is therefore narrower than the title's motivating question: entering the Top Five without a prior Top Five record has become less common, and first-time authors are increasingly connected to experienced Top Five authors through coauthorship.
-
-## Technical Stack
-
-- **Data collection:** Python, Requests, Beautiful Soup, OpenAlex API, and Crossref API
-- **Data processing and record linkage:** pandas, NumPy, DOI normalization, exact matching, and fuzzy name matching
-- **Machine learning:** scikit-learn, TF-IDF, logistic regression, PyTorch, Hugging Face Transformers, SPECTER2, and SciBERT
-- **Visualization:** Matplotlib and custom interactive HTML/CSS/JavaScript charts
-- **Testing and version control:** pytest, Git, and GitHub
+Given the limitation of the data: they capture published papers rather than submissions, rejections, time spent in revision and resubmission, or acceptance probabilities, we should interpret the results with cautious. The patterns may also reflect changes in coauthorship, team size, and research production. However, these findings consistently show that prior Top Five experience has become more closely associated with authorship and entry. These evidence indicates that it becomes harder for researchers without an established publication record to break into economics' leading journals. More detailed data on the submission and editorial process would be needed to assess directly whether, why, and how barriers to entry have changed for researchers without a prior Top Five publication.
 
 ## Project Structure
 
@@ -140,15 +200,3 @@ src/
   Step3_TrainingModelClassifyJELCodes/
   Step4_CleanAuthorNames/
   Step5_EnrichAuthorEducation/
-tests/                        # Regression and pipeline tests
-```
-
-## Author PhD Enrichment
-
-After author IDs are created, the Step 5 pipeline can use the ORCID Public API to enrich the unique author list with PhD institutions and years while retaining source evidence and ambiguous cases for review:
-
-```bash
-python src/Step5_EnrichAuthorEducation/01_EnrichAuthorPhD.py --limit 25
-```
-
-See [`src/Step5_EnrichAuthorEducation/README.md`](src/Step5_EnrichAuthorEducation/README.md) for API setup, confidence rules, resumable runs, and output definitions.

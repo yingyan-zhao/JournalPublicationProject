@@ -34,9 +34,8 @@ PAPER_AUTHOR_JEL_TOP5_CSV = (
     Path("data/processed")
     / "JEL_Training_Data_PaperAuthor_WithAuthorID_JEL_Merged_Top5.csv"
 )
-ANALYSIS_OUTPUT_DIR = Path("data/processed/author_concentration")
+ANALYSIS_OUTPUT_DIR = Path("outputs/figures")
 OVERALL_OUTPUT_DIR = ANALYSIS_OUTPUT_DIR / "overall"
-FIELD_OUTPUT_DIR = ANALYSIS_OUTPUT_DIR / "by_field"
 ANALYSIS_SUMMARY_CSV = ANALYSIS_OUTPUT_DIR / "Analysis_Summary.csv"
 
 PAPER_AUTHOR_COLUMNS_TO_KEEP = [
@@ -68,7 +67,6 @@ TOP_FIVE_JOURNALS = {
     "quarterly journal of economics": "Quarterly Journal of Economics",
     "the quarterly journal of economics": "Quarterly Journal of Economics",
 }
-JEL_FIELDS = ("D", "C", "E", "J", "H", "O", "L", "G", "F", "I")
 TOP_AUTHOR_PERCENTAGES = (1, 5, 10)
 GRAPH1_HIGHLIGHT_PERCENTAGE = 10
 ROLLING_WINDOW_YEARS = 20
@@ -78,6 +76,28 @@ AUTHOR_ENTRY_COHORTS = [
     (2001, 2010, "2001-2010"),
     (2011, 2020, "2011-2020"),
 ]
+
+#############################################################################
+# In 02_ExploreConcentrationAuthor.py, do the following steps only
+# Step 1. Clean JEL_Training_Data_PaperAuthor_WithAuthorID.csv by keeping only the following variables, doi_full final_last_name final_first_name author_id
+# Step 2. Clean JEL_Training_Data_Complete_Observed_And_Predicted.csv, by keeping doi title journalname publication_year jel_code_full tfidf_predicted_jel_code_full tfidf_max_confidence specter2_predicted_jel_code_full specter2_max_confidence scibert_predicted_jel_code_full scibert_max_confidence ensemble_predicted_jel_code_full ensemble_max_confidence
+# Step 3. Merge "JEL_Training_Data_PaperAuthor_WithAuthorID_Cleaned.csv" and "JEL_Training_Data_Complete_Observed_And_Predicted_Cleaned.csv" by doi_full. This is a m:1 match.
+# Step 4. Keep papers in only top 5 journals. Define Final_jel_code. It takes the value of jel_code_full if jel_code_full is not missing. Otherwise,Final_jel_code takes the  value of scibert_predicted_jel_code_full. We will use Final_jel_code as jel classification thereafter.
+#
+# Step 5. [Graph 1] For each year, based on the past 20 years of publication, identify top 1% authors based on their number of publications. For each year, calculate the share of papers who have the name of top 1% authors. Each row is paper-author, so when calculate the number of papers, do not double counting. Do the same thing for top 5%, top 10% authors as well. Draw the graph for years after 1980. Each line indicates the time trend of the share of top 1% 5% and 10%.
+#
+# Step 6. [Graph 2] For each year, calculate the number of new authors, the share of new authors of the total number of authors within the year, the share of papers that has a name of new authors. New authors are defined as the authors that never appeared in the data. Do not double count The total number of authors , as the same author may appear multiple times. When calculating the number of papers, do not double counting.
+#
+# Graph 2.1 plot the trend of  the number of new authors and the share of new authors of the total number of authors within the year in one graph. Use left axis as share and right axis as number.   The range for share needs to be 30%  to 70%. Year range 1980 to 2025.
+#
+# Graph 2.2 plot the trend of  the number of papers that has a name of new authors and the share of papers that has a name of new authors in one graph. Use left axis as share and right axis as number.  The range for share needs to be 30%  to 70%. Year range 1980 to 2025.
+#
+# Step 7. [Graph 3] For new authors, explore whether their first publication with experienced ones or with other new authors.
+#
+# Step 8. [Graph 4] Look at the average gap of years between the first publication and the second publication of authors, between the second publication and the third publication? between the third publication and the fourth publication, and so on.  Draw this graph for different cohorts of authors. The cohort is defined by the first year of publication by the authors. 1981-1990, 1991-2000, 2001-2010, 2011-2020
+#
+# Step 9. [Graph 5] Draw the average gap of years between the first publication and the second publication of authors, against the publish year of the first top five.
+#############################################################################
 
 
 def main() -> None:
@@ -160,40 +180,12 @@ def main() -> None:
         )
     ]
 
-    # Step 10. Repeat Steps 5-9 separately for each requested JEL field.
-    for field_number, field in enumerate(JEL_FIELDS, start=1):
-        field_data = keep_jel_field(top5, field)
-        print(
-            f"\nStarting Steps 5-9 for JEL {field} "
-            f"({field_number}/{len(JEL_FIELDS)})...",
-            flush=True,
-        )
-        summaries.append(
-            run_analysis(
-                data=field_data,
-                output_dir=FIELD_OUTPUT_DIR / field,
-                analysis_label=f"JEL {field}",
-                minimum_gap_authors=10,
-            )
-        )
-        print_progress(
-            step=10,
-            scope=f"JEL {field}",
-            message=(
-                f"finished field {field_number}/{len(JEL_FIELDS)} with "
-                f"{field_data['doi_full'].nunique():,} unique papers"
-            ),
-        )
-
     summary = pd.DataFrame(summaries)
     write_csv(summary, ANALYSIS_SUMMARY_CSV)
     print_progress(
         step=10,
-        scope="All requested fields",
-        message=(
-            f"completed {len(JEL_FIELDS)} field analyses and wrote "
-            f"{ANALYSIS_SUMMARY_CSV}"
-        ),
+        scope="All fields",
+        message=f"completed the overall analysis and wrote {ANALYSIS_SUMMARY_CSV}",
     )
     print_run_summary(
         paper_author=paper_author,
@@ -213,12 +205,15 @@ def run_analysis(
     output_dir.mkdir(parents=True, exist_ok=True)
     paper_years = prepare_paper_years(data)
     author_papers = prepare_author_papers(data)
+    ranking_scope = "All fields"
 
     # Step 5 / Graph 1.
     top_author_shares, top_author_list = rolling_top_author_paper_shares(
         paper_years,
         author_papers,
     )
+    top_author_shares.insert(0, "ranking_scope", ranking_scope)
+    top_author_list.insert(0, "ranking_scope", ranking_scope)
     write_csv(
         top_author_shares,
         output_dir / "Graph1_Rolling20Year_TopAuthorPaperShares.csv",
@@ -244,7 +239,8 @@ def run_analysis(
         scope=analysis_label,
         message=(
             f"Graph 1 PNG and interactive HTML complete for "
-            f"{paper_years['publication_year'].nunique():,} publication years"
+            f"{paper_years['publication_year'].nunique():,} publication years; "
+            f"top 1%, 5%, and 10% ranked within {ranking_scope}"
         ),
     )
 
@@ -267,10 +263,7 @@ def run_analysis(
         share_max=0.50,
         share_column="share_of_authors_who_are_new",
         title="New authors account for a smaller share of authors over time.",
-        subtitle=(
-            f"{analysis_label} \N{MIDDLE DOT} New author defined as first "
-            "observed publication in Top 5 journals"
-        ),
+        subtitle=new_author_definition_subtitle(analysis_label),
         share_label="Share of authors who are new",
         end_label="New authors\N{RIGHT SINGLE QUOTATION MARK} share",
         annotation_text=(
@@ -494,21 +487,6 @@ def add_final_jel_code(data: pd.DataFrame) -> pd.DataFrame:
     )
     cleaned["Final_jel_code"] = observed.mask(observed.eq(""), predicted)
     return cleaned
-
-
-def keep_jel_field(data: pd.DataFrame, field: str) -> pd.DataFrame:
-    field_mask = data["Final_jel_code"].apply(
-        lambda value: field in split_jel_fields(value)
-    )
-    return data.loc[field_mask].copy()
-
-
-def split_jel_fields(value) -> set[str]:
-    return {
-        part.strip().upper()
-        for part in str(value or "").split(";")
-        if part.strip()
-    }
 
 
 def prepare_paper_years(data: pd.DataFrame) -> pd.DataFrame:
@@ -906,6 +884,34 @@ def round_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     return rounded
 
 
+def top_author_ranking_subtitle(analysis_label: str) -> str:
+    if analysis_label == "All fields":
+        return (
+            "All fields \N{MIDDLE DOT} Author rankings calculated across all "
+            "fields over the preceding 20 years"
+        )
+    return (
+        f"{analysis_label} \N{MIDDLE DOT} Top 1%, 5%, and 10% calculated "
+        "within this field over the preceding 20 years"
+    )
+
+
+def publication_scope_label(analysis_label: str) -> str:
+    return "the Top Five" if analysis_label == "All fields" else analysis_label
+
+
+def new_author_definition_subtitle(analysis_label: str) -> str:
+    if analysis_label == "All fields":
+        return (
+            "All fields \N{MIDDLE DOT} New author defined as first observed "
+            "publication in the Top Five"
+        )
+    return (
+        f"{analysis_label} \N{MIDDLE DOT} New author defined as first observed "
+        "publication in this field"
+    )
+
+
 def write_interactive_top_author_shares(
     data: pd.DataFrame,
     output_path: Path,
@@ -928,6 +934,8 @@ def write_interactive_top_author_shares(
             ]
             for row in series.itertuples(index=False)
         ]
+
+    subtitle = top_author_ranking_subtitle(analysis_label)
 
     document = """<!doctype html>
 <html lang="en">
@@ -1128,7 +1136,7 @@ def write_interactive_top_author_shares(
 <body>
   <main id="top-author-share-chart" class="chart">
     <h1>A growing share of papers include top-ranked authors</h1>
-    <p class="subtitle">__ANALYSIS_LABEL__ &middot; Author rankings based on publication count over the preceding 20 years</p>
+    <p class="subtitle">__SUBTITLE__</p>
     <div class="legend" aria-label="Choose the emphasized author group">
       <button type="button" data-series="1" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-1)"></span>Top 1% of authors</button>
       <button type="button" data-series="5" aria-pressed="false"><span class="swatch" style="--swatch: var(--series-5)"></span>Top 5% of authors</button>
@@ -1263,8 +1271,8 @@ def write_interactive_top_author_shares(
 </html>
 """
     document = document.replace(
-        "__ANALYSIS_LABEL__",
-        html.escape(analysis_label),
+        "__SUBTITLE__",
+        html.escape(subtitle),
     ).replace(
         "__SERIES_DATA__",
         json.dumps(series_data, separators=(",", ":"), allow_nan=False),
@@ -1305,6 +1313,7 @@ def write_interactive_new_author_share(
         for row in plot_data.itertuples(index=False)
     ]
     show_annotation = analysis_label == "All fields"
+    subtitle = new_author_definition_subtitle(analysis_label)
 
     document = """<!doctype html>
 <html lang="en">
@@ -1467,7 +1476,7 @@ def write_interactive_new_author_share(
 <body>
   <main id="new-author-share-chart" class="chart">
     <h1>New authors account for a smaller share of authors over time.</h1>
-    <p class="subtitle">__ANALYSIS_LABEL__ &middot; New author defined as first observed publication in Top 5 journals</p>
+    <p class="subtitle">__SUBTITLE__</p>
     <svg class="chart-svg" viewBox="0 0 900 520" role="img" aria-labelledby="chart-title chart-description">
       <title id="chart-title">Annual share of authors who are new to top-five economics journals</title>
       <desc id="chart-description">Hover over the line to see the year and percentage of authors who are new.</desc>
@@ -1559,7 +1568,7 @@ def write_interactive_new_author_share(
 </html>
 """
     document = (
-        document.replace("__ANALYSIS_LABEL__", html.escape(analysis_label))
+        document.replace("__SUBTITLE__", html.escape(subtitle))
         .replace(
             "__SERIES_DATA__",
             json.dumps(series_data, separators=(",", ":"), allow_nan=False),
@@ -1629,10 +1638,7 @@ def plot_top_author_shares(
     axis.text(
         0,
         1.015,
-        (
-            f"{analysis_label} \N{MIDDLE DOT} Author rankings based on publication count over the  "
-            "preceding 20 years"
-        ),
+        top_author_ranking_subtitle(analysis_label),
         transform=axis.transAxes,
         color="#69727D",
         fontsize=11,
@@ -1878,19 +1884,17 @@ def write_interactive_new_author_coauthor_types(
             for row in series.itertuples(index=False)
         ]
 
+    scope_label = publication_scope_label(analysis_label)
     subtitle = (
-        "Share of new authors by coauthor composition in their first "
-        "top-five publication, 1980\N{EN DASH}2025"
+        "Share of new authors by coauthor composition during their first "
+        f"observed year in {scope_label}, 1980\N{EN DASH}2025"
     )
-    if analysis_label != "All fields":
-        subtitle = f"{analysis_label} \N{MIDDLE DOT} {subtitle}"
-
     document = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>New authors publish their first top-five increasingly with experienced coauthors</title>
+  <title>New authors increasingly publish with experienced coauthors</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -2078,7 +2082,7 @@ def write_interactive_new_author_coauthor_types(
 </head>
 <body>
   <main id="new-author-coauthor-chart" class="chart">
-    <h1>New authors publish their first top-five increasingly with experienced coauthors</h1>
+    <h1>New authors increasingly publish with experienced coauthors</h1>
     <p class="subtitle">__SUBTITLE__</p>
     <div class="legend" aria-label="Choose the emphasized coauthor composition">
       <button type="button" data-series="experienced" aria-pressed="true"><span class="swatch" style="--swatch: var(--experienced)"></span>At least one experienced coauthor</button>
@@ -2086,11 +2090,11 @@ def write_interactive_new_author_coauthor_types(
       <button type="button" data-series="solo" aria-pressed="false"><span class="swatch" style="--swatch: var(--solo)"></span>Solo-authored</button>
     </div>
     <svg class="chart-svg" viewBox="0 0 900 540" role="img" aria-labelledby="chart-title chart-description">
-      <title id="chart-title">Coauthor composition in new authors' first top-five publications</title>
+      <title id="chart-title">Coauthor composition during new authors' first observed year in __SCOPE_LABEL__</title>
       <desc id="chart-description">Hover over a line to see the year and share of new authors in that coauthor category.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> New authors are the ones who published their first top-five in that year. &ldquo;Experienced coauthor&rdquo; means the coauthor published at least one top-five before. Categories are mutually exclusive and sum to 100%.</p>
+    <p class="note"><strong>Note:</strong> New authors are those publishing in __SCOPE_LABEL__ for the first observed time in that year. &ldquo;Experienced coauthor&rdquo; means the coauthor published in __SCOPE_LABEL__ previously. Categories are mutually exclusive and sum to 100%.</p>
   </main>
   <script>
     (() => {
@@ -2132,7 +2136,7 @@ def write_interactive_new_author_coauthor_types(
       });
       add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
       add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
-      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 14, "text-anchor": "middle" }, "Year of first top-five publication");
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 14, "text-anchor": "middle" }, "Year of first publication in __SCOPE_LABEL__");
       add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Share of new authors");
 
       const keys = ["experienced", "new_only", "solo"];
@@ -2224,6 +2228,7 @@ def write_interactive_new_author_coauthor_types(
 """
     document = (
         document.replace("__SUBTITLE__", html.escape(subtitle))
+        .replace("__SCOPE_LABEL__", html.escape(scope_label))
         .replace(
             "__SERIES_DATA__",
             json.dumps(series_data, separators=(",", ":"), allow_nan=False),
@@ -2306,22 +2311,18 @@ def plot_new_author_coauthor_types(
             label=label,
             **line_style,
         )
+    scope_label = publication_scope_label(analysis_label)
     axis.set_title(
-        (
-            "New authors publish their first top-five increasingly "
-            "with experienced coauthors"
-        ),
+        "New authors increasingly publish with experienced coauthors",
         loc="left",
         pad=38,
         fontsize=15,
         fontweight="semibold",
     )
     subtitle = (
-        "Share of new authors by coauthor composition in their first "
-        f"top-five publication, 1980\N{EN DASH}2025"
+        "Share of new authors by coauthor composition during their first "
+        f"observed year in {scope_label}, 1980\N{EN DASH}2025"
     )
-    if analysis_label != "All fields":
-        subtitle = f"{analysis_label} \N{MIDDLE DOT} {subtitle}"
     axis.text(
         0,
         1.015,
@@ -2332,7 +2333,7 @@ def plot_new_author_coauthor_types(
         ha="left",
         va="bottom",
     )
-    axis.set_xlabel("Year of first top-five publication")
+    axis.set_xlabel(f"Year of first publication in {scope_label}")
     axis.set_ylabel("Share of new authors")
     axis.yaxis.set_major_formatter(PercentFormatter(1.0))
     axis.set_xlim(from_year, to_year)
@@ -2420,10 +2421,10 @@ def plot_new_author_coauthor_types(
         0.115,
         0.015,
         (
-            "Note: New authors are the ones who published their first top-five "
-            "in that year.\n\"Experienced coauthor\" means the coauthor published "
-            "at least one top-five before.\nCategories are mutually exclusive "
-            "and sum to 100%."
+            f"Note: New authors are those publishing in {scope_label} for the first "
+            f"observed time in that year.\n\"Experienced coauthor\" means the "
+            f"coauthor published in {scope_label} previously.\nCategories are "
+            "mutually exclusive and sum to 100%."
         ),
         color="#69727D",
         fontsize=9,
@@ -2481,13 +2482,11 @@ def write_interactive_publication_gaps_by_cohort(
     if not series_data:
         return
 
+    scope_label = publication_scope_label(analysis_label)
     subtitle = (
-        "Average years between consecutive top-five publications, by cohort "
-        "of first publication"
+        f"Average years between consecutive publications in {scope_label}, "
+        f"by cohort of first publication in {scope_label}"
     )
-    if analysis_label != "All fields":
-        subtitle = f"{analysis_label} \N{MIDDLE DOT} {subtitle}"
-
     document = """<!doctype html>
 <html lang="en">
 <head>
@@ -2728,7 +2727,7 @@ def write_interactive_publication_gaps_by_cohort(
       <desc id="chart-description">Hover over a cohort line to inspect the publication transition, average gap, and number of authors.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> Values show mean years between consecutive publications. Cohorts are defined by the year of first top-five publication. Later publication numbers include only authors who reach that stage.</p>
+    <p class="note"><strong>Note:</strong> Values show mean years between consecutive publications in __SCOPE_LABEL__. Cohorts are defined by the year of first publication in __SCOPE_LABEL__. Later publication numbers include only authors who reach that stage.</p>
   </main>
   <script>
     (() => {
@@ -2903,6 +2902,7 @@ def write_interactive_publication_gaps_by_cohort(
 """
     document = (
         document.replace("__SUBTITLE__", html.escape(subtitle))
+        .replace("__SCOPE_LABEL__", html.escape(scope_label))
         .replace(
             "__SERIES_DATA__",
             json.dumps(series_data, separators=(",", ":"), allow_nan=False),
@@ -2996,12 +2996,11 @@ def plot_publication_gaps_by_cohort(
         fontsize=17,
         fontweight="semibold",
     )
+    scope_label = publication_scope_label(analysis_label)
     subtitle = (
-        "Average years between consecutive top-five publications, by cohort "
-        "of first publication"
+        f"Average years between consecutive publications in {scope_label}, "
+        f"by cohort of first publication in {scope_label}"
     )
-    if analysis_label != "All fields":
-        subtitle = f"{analysis_label} \N{MIDDLE DOT} {subtitle}"
     axis.text(
         0,
         1.015,
@@ -3072,9 +3071,10 @@ def plot_publication_gaps_by_cohort(
         0.115,
         0.025,
         (
-            "Note: Values show mean years between consecutive publications. "
-            "Cohorts are defined by the year of first top-five publication.\n"
-            "Later publication numbers include only authors who reach that stage."
+            f"Note: Values show mean years between consecutive publications in "
+            f"{scope_label}. Cohorts are defined by the year of first publication "
+            f"in {scope_label}.\nLater publication numbers include only authors "
+            "who reach that stage."
         ),
         color="#69727D",
         fontsize=9,
@@ -3120,19 +3120,22 @@ def write_interactive_first_to_second_gap_by_first_year(
         ]
         for row in plot_data.itertuples(index=False)
     ]
-    subtitle = (
-        "Average years between authors' first and second top-five publications, "
-        "by year of first publication"
+    scope_label = publication_scope_label(analysis_label)
+    graph_title = (
+        "The observed gap to a second top-five publication has narrowed"
+        if analysis_label == "All fields"
+        else f"The observed gap to a second publication in {scope_label} has narrowed"
     )
-    if analysis_label != "All fields":
-        subtitle = f"{subtitle} \N{MIDDLE DOT} {analysis_label}"
-
+    subtitle = (
+        f"Average years between authors' first and second publications in "
+        f"{scope_label}, by year of first publication in {scope_label}"
+    )
     document = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The observed gap to a second top-five publication has narrowed</title>
+  <title>__GRAPH_TITLE__</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -3279,14 +3282,14 @@ def write_interactive_first_to_second_gap_by_first_year(
 </head>
 <body>
   <main id="first-to-second-gap-chart" class="chart">
-    <h1>The observed gap to a second top-five publication has narrowed</h1>
+    <h1>__GRAPH_TITLE__</h1>
     <p class="subtitle">__SUBTITLE__</p>
     <svg class="chart-svg" viewBox="0 0 900 520" role="img" aria-labelledby="chart-title chart-description">
-      <title id="chart-title">Average years between first and second top-five publications</title>
+      <title id="chart-title">Average years between first and second publications in __SCOPE_LABEL__</title>
       <desc id="chart-description">Hover over the line to inspect the first-publication year, average gap to a second publication, and number of authors.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> Cohorts are defined by the year of an author&rsquo;s first top-five publication. Values show the mean observed time to a second top-five publication. Recent cohorts may have incomplete follow-up.</p>
+    <p class="note"><strong>Note:</strong> Cohorts are defined by the year of an author&rsquo;s first publication in __SCOPE_LABEL__. Values show the mean observed time to a second publication in __SCOPE_LABEL__. Recent cohorts may have incomplete follow-up.</p>
   </main>
   <script>
     (() => {
@@ -3336,8 +3339,8 @@ def write_interactive_first_to_second_gap_by_first_year(
       });
       add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
       add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
-      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Year of first top-five publication");
-      add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Years between first and second publication");
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Year of first publication in __SCOPE_LABEL__");
+      add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Years between first and second publication in __SCOPE_LABEL__");
 
       const path = data.map(([year, gap], index) => `${index ? "L" : "M"}${x(year).toFixed(2)},${y(gap).toFixed(2)}`).join(" ");
       const gapLine = add("path", { class: "gap-line", d: path, "clip-path": "url(#graph5-plot-clip)" });
@@ -3388,6 +3391,8 @@ def write_interactive_first_to_second_gap_by_first_year(
 """
     document = (
         document.replace("__SUBTITLE__", html.escape(subtitle))
+        .replace("__GRAPH_TITLE__", html.escape(graph_title))
+        .replace("__SCOPE_LABEL__", html.escape(scope_label))
         .replace(
             "__SERIES_DATA__",
             json.dumps(series_data, separators=(",", ":"), allow_nan=False),
@@ -3438,19 +3443,23 @@ def plot_first_to_second_gap_by_first_year(
         markeredgewidth=0.8,
         zorder=3,
     )
+    scope_label = publication_scope_label(analysis_label)
+    graph_title = (
+        "The observed gap to a second top-five publication has narrowed"
+        if analysis_label == "All fields"
+        else f"The observed gap to a second publication in {scope_label} has narrowed"
+    )
     axis.set_title(
-        "The observed gap to a second top-five publication has narrowed",
+        graph_title,
         loc="left",
         pad=38,
         fontsize=17,
         fontweight="semibold",
     )
     subtitle = (
-        "Average years between authors' first and second top-five publications, "
-        "by year of first publication"
+        f"Average years between authors' first and second publications in "
+        f"{scope_label}, by year of first publication in {scope_label}"
     )
-    if analysis_label != "All fields":
-        subtitle = f"{subtitle} \N{MIDDLE DOT} {analysis_label}"
     axis.text(
         0,
         1.015,
@@ -3461,8 +3470,10 @@ def plot_first_to_second_gap_by_first_year(
         ha="left",
         va="bottom",
     )
-    axis.set_xlabel("Year of first top-five publication")
-    axis.set_ylabel("Years between first and second publication")
+    axis.set_xlabel(f"Year of first publication in {scope_label}")
+    axis.set_ylabel(
+        f"Years between first and second publication in {scope_label}"
+    )
     axis.set_xlim(from_year, to_year)
     axis.set_ylim(2, 7)
     axis.grid(axis="y", color="#D8DDE3", linewidth=0.8, alpha=0.8)
@@ -3506,9 +3517,10 @@ def plot_first_to_second_gap_by_first_year(
         0.115,
         0.025,
         (
-            "Note: Cohorts are defined by the year of an author's first top-five publication. "
-            "Values show the mean observed time to a second top-five publication.\n"
-            "Recent cohorts may have incomplete follow-up."
+            f"Note: Cohorts are defined by the year of an author's first publication "
+            f"in {scope_label}. Values show the mean observed time to a second "
+            f"publication in {scope_label}.\nRecent cohorts may have incomplete "
+            "follow-up."
         ),
         color="#69727D",
         fontsize=9,

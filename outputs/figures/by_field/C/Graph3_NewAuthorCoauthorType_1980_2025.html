@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>New authors publish their first top-five increasingly with experienced coauthors</title>
+  <title>New authors increasingly publish with experienced coauthors</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -191,19 +191,19 @@
 </head>
 <body>
   <main id="new-author-coauthor-chart" class="chart">
-    <h1>New authors publish their first top-five increasingly with experienced coauthors</h1>
-    <p class="subtitle">JEL field C · Share of new authors by coauthor composition in their first top-five publication, 1980–2025</p>
+    <h1>New authors increasingly publish with experienced coauthors</h1>
+    <p class="subtitle">Share of new authors by coauthor composition during their first observed year in JEL C, 1980–2025</p>
     <div class="legend" aria-label="Choose the emphasized coauthor composition">
       <button type="button" data-series="experienced" aria-pressed="true"><span class="swatch" style="--swatch: var(--experienced)"></span>At least one experienced coauthor</button>
       <button type="button" data-series="new_only" aria-pressed="false"><span class="swatch" style="--swatch: var(--new-only)"></span>New coauthors only</button>
       <button type="button" data-series="solo" aria-pressed="false"><span class="swatch" style="--swatch: var(--solo)"></span>Solo-authored</button>
     </div>
     <svg class="chart-svg" viewBox="0 0 900 540" role="img" aria-labelledby="chart-title chart-description">
-      <title id="chart-title">Coauthor composition in new authors' first top-five publications</title>
+      <title id="chart-title">Coauthor composition during new authors' first observed year in JEL C</title>
       <desc id="chart-description">Hover over a line to see the year and share of new authors in that coauthor category.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> New authors are the ones who published their first top-five in that year. &ldquo;Experienced coauthor&rdquo; means the coauthor published at least one top-five before. Categories are mutually exclusive and sum to 100%.</p>
+    <p class="note"><strong>Note:</strong> New authors are those publishing in JEL C for the first observed time in that year. &ldquo;Experienced coauthor&rdquo; means the coauthor published in JEL C previously. Categories are mutually exclusive and sum to 100%.</p>
   </main>
   <script>
     (() => {
@@ -245,7 +245,7 @@
       });
       add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
       add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
-      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 14, "text-anchor": "middle" }, "Year of first top-five publication");
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 14, "text-anchor": "middle" }, "Year of first publication in JEL C");
       add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Share of new authors");
 
       const keys = ["experienced", "new_only", "solo"];
@@ -261,9 +261,17 @@
 
       if (showAnnotation) {
         const target = series.experienced.find(point => point[0] === 2025) ?? series.experienced[series.experienced.length - 1];
+        const newOnlyTarget = series.new_only.find(point => point[0] === 2025) ?? series.new_only[series.new_only.length - 1];
+        const soloTarget = series.solo.find(point => point[0] === 2025) ?? series.solo[series.solo.length - 1];
         add("line", { class: "annotation-line", x1: x(2014), y1: y(0.91), x2: x(target[0]), y2: y(target[1]) });
-        add("text", { class: "annotation", x: x(1994), y: y(0.96) }, "Entry with experienced coauthors rose from about 28% to 77%,");
+        add("text", { class: "annotation", x: x(1994), y: y(0.96) }, "First publication with experienced coauthors rose from about 28% to 77%,");
         add("text", { class: "annotation", x: x(1994), y: y(0.915) }, "+49 percentage points since 1980");
+        add("line", { class: "annotation-line", x1: x(2018), y1: y(0.29), x2: x(newOnlyTarget[0]), y2: y(newOnlyTarget[1]) });
+        add("text", { class: "annotation", x: x(2005), y: y(0.35) }, "New coauthors only: 24% → 16%");
+        add("text", { class: "annotation", x: x(2005), y: y(0.305) }, "(-8 percentage points since 1980)");
+        add("line", { class: "annotation-line", x1: x(2016), y1: y(0.12), x2: x(soloTarget[0]), y2: y(soloTarget[1]) });
+        add("text", { class: "annotation", x: x(1998), y: y(0.15) }, "Solo-authored: 49% → 7%");
+        add("text", { class: "annotation", x: x(1998), y: y(0.105) }, "(-42 percentage points since 1980)");
       }
 
       let selectedSeries = "experienced";
