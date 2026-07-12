@@ -70,13 +70,17 @@ TOP_FIVE_JOURNALS = {
 TOP_AUTHOR_PERCENTAGES = (1, 5, 10)
 GRAPH1_HIGHLIGHT_PERCENTAGE = 10
 ROLLING_WINDOW_YEARS = 20
+GRAPH5_FROM_YEAR = 1990
+GRAPH5_TO_YEAR = 2015
+FOLLOWUP_WINDOW_YEARS = 11
+GRAPH4_FOLLOWUP_WINDOW_YEARS = FOLLOWUP_WINDOW_YEARS
+GRAPH5_MAX_GAP_YEARS = FOLLOWUP_WINDOW_YEARS
+SECOND_PUBLICATION_WINDOW_YEARS = 5
 AUTHOR_ENTRY_COHORTS = [
-    (1981, 1990, "1981-1990"),
-    (1991, 2000, "1991-2000"),
-    (2001, 2010, "2001-2010"),
-    (2011, 2020, "2011-2020"),
+    (1991, 1995, "1991-1995"),
+    (2001, 2005, "2001-2005"),
+    (2011, 2015, "2011-2015"),
 ]
-
 #############################################################################
 # In 02_ExploreConcentrationAuthor.py, do the following steps only
 # Step 1. Clean JEL_Training_Data_PaperAuthor_WithAuthorID.csv by keeping only the following variables, doi_full final_last_name final_first_name author_id
@@ -94,9 +98,19 @@ AUTHOR_ENTRY_COHORTS = [
 #
 # Step 7. [Graph 3] For new authors, explore whether their first publication with experienced ones or with other new authors.
 #
-# Step 8. [Graph 4] Look at the average gap of years between the first publication and the second publication of authors, between the second publication and the third publication? between the third publication and the fourth publication, and so on.  Draw this graph for different cohorts of authors. The cohort is defined by the first year of publication by the authors. 1981-1990, 1991-2000, 2001-2010, 2011-2020
+# Step 8. [Graph 4] Look at the average gap of years between the first publication and the second publication of authors,
+# between the second publication and the third publication? between the third publication and the fourth publication, and so on.
+# Draw this graph for different cohorts of authors. The cohort is defined by the first year of publication by the authors.
+# 1991-1995, 2001-2005, 2011-2015. Every author should a complete 11-year follow-up window,
+# and only consider his publication records within the 11 year follow-up window. Add a 95 confidence interval for each point.
 #
-# Step 9. [Graph 5] Draw the average gap of years between the first publication and the second publication of authors, against the publish year of the first top five.
+# Step 9. [Graph 5] Draw the average gap of years between the first publication and the second publication of authors,
+# against the publish year of the first top five, for year from 1990 to 2015 only,
+# conditional on the second paper is published within 11 years after the first paper. y axis range should be 3-5.
+# Add a 95 confidence interval for each point.
+#
+# Step 10. Calculate the probability of observing a second publication within 5 years for each cohort.
+# Cohort is defined as the year when they publish the first paper on top 5.
 #############################################################################
 
 
@@ -169,8 +183,8 @@ def main() -> None:
         ),
     )
 
-    # Steps 5-9. Produce the five analyses for all top-five papers.
-    print("\nStarting Steps 5-9 for All fields...", flush=True)
+    # Steps 5-10. Produce the analyses for all top-five papers.
+    print("\nStarting Steps 5-10 for All fields...", flush=True)
     summaries = [
         run_analysis(
             data=top5,
@@ -183,7 +197,7 @@ def main() -> None:
     summary = pd.DataFrame(summaries)
     write_csv(summary, ANALYSIS_SUMMARY_CSV)
     print_progress(
-        step=10,
+        step=11,
         scope="All fields",
         message=f"completed the overall analysis and wrote {ANALYSIS_SUMMARY_CSV}",
     )
@@ -340,12 +354,26 @@ def run_analysis(
         ),
     )
     # Step 8 / Graph 4.
-    publication_gaps = consecutive_publication_gaps(author_papers)
+    observation_end_year = int(author_papers["publication_year"].max())
+    graph4_author_papers = restrict_to_complete_author_followup_window(
+        author_papers,
+        followup_years=GRAPH4_FOLLOWUP_WINDOW_YEARS,
+    )
+    graph4_author_papers = graph4_author_papers.loc[
+        graph4_author_papers["first_top5_publication_year"]
+        .apply(author_entry_cohort)
+        .ne("")
+    ].copy()
+    graph4_publication_gaps = consecutive_publication_gaps(
+        graph4_author_papers
+    )
     publication_gap_by_cohort = summarize_publication_gaps_by_cohort(
-        publication_gaps
+        graph4_publication_gaps,
+        followup_window_years=GRAPH4_FOLLOWUP_WINDOW_YEARS,
+        observation_end_year=observation_end_year,
     )
     write_csv(
-        publication_gaps,
+        graph4_publication_gaps,
         output_dir / "Graph4_ConsecutivePublicationGaps.csv",
     )
     write_csv(
@@ -357,42 +385,56 @@ def run_analysis(
         output_dir / "Graph4_ConsecutivePublicationGaps_ByCohort.png",
         analysis_label,
         minimum_authors=minimum_gap_authors,
+        followup_window_years=GRAPH4_FOLLOWUP_WINDOW_YEARS,
     )
     write_interactive_publication_gaps_by_cohort(
         publication_gap_by_cohort,
         output_dir / "Graph4_ConsecutivePublicationGaps_ByCohort.html",
         analysis_label,
         minimum_authors=minimum_gap_authors,
+        followup_window_years=GRAPH4_FOLLOWUP_WINDOW_YEARS,
     )
     print_progress(
         step=8,
         scope=analysis_label,
         message=(
             f"Graph 4 PNG and interactive HTML complete from "
-            f"{len(publication_gaps):,} consecutive publication gaps"
+            f"{len(graph4_publication_gaps):,} consecutive publication gaps "
+            f"among {graph4_author_papers['author_id'].nunique():,} authors "
+            f"with a complete {GRAPH4_FOLLOWUP_WINDOW_YEARS}-year window; "
+            "publications after that window were excluded"
         ),
     )
     # Step 9 / Graph 5.
+    publication_gaps = consecutive_publication_gaps(author_papers)
     first_to_second_gap = summarize_first_to_second_gap_by_first_year(
-        publication_gaps
+        publication_gaps,
+        from_year=GRAPH5_FROM_YEAR,
+        to_year=GRAPH5_TO_YEAR,
+        maximum_gap_years=GRAPH5_MAX_GAP_YEARS,
     )
     write_csv(
         first_to_second_gap,
-        output_dir / "Graph5_FirstToSecondPublicationGap_ByFirstYear.csv",
+        output_dir
+        / "Graph5_FirstToSecondPublicationGap_1990_2015_Within11Years.csv",
     )
     plot_first_to_second_gap_by_first_year(
         first_to_second_gap,
-        output_dir / "Graph5_FirstToSecondPublicationGap_1980_2020.png",
+        output_dir
+        / "Graph5_FirstToSecondPublicationGap_1990_2015_Within11Years.png",
         analysis_label,
-        from_year=1980,
-        to_year=2020,
+        from_year=GRAPH5_FROM_YEAR,
+        to_year=GRAPH5_TO_YEAR,
+        maximum_gap_years=GRAPH5_MAX_GAP_YEARS,
     )
     write_interactive_first_to_second_gap_by_first_year(
         first_to_second_gap,
-        output_dir / "Graph5_FirstToSecondPublicationGap_1980_2020.html",
+        output_dir
+        / "Graph5_FirstToSecondPublicationGap_1990_2015_Within11Years.html",
         analysis_label,
-        from_year=1980,
-        to_year=2020,
+        from_year=GRAPH5_FROM_YEAR,
+        to_year=GRAPH5_TO_YEAR,
+        maximum_gap_years=GRAPH5_MAX_GAP_YEARS,
     )
     authors_with_second_publication = int(
         first_to_second_gap["number_of_authors"].sum()
@@ -404,15 +446,69 @@ def run_analysis(
         scope=analysis_label,
         message=(
             f"Graph 5 PNG and interactive HTML complete for "
-            f"{authors_with_second_publication:,} authors with a second publication"
+            f"{authors_with_second_publication:,} authors whose second publication "
+            f"occurred within {GRAPH5_MAX_GAP_YEARS} years; entry years "
+            f"{GRAPH5_FROM_YEAR}-{GRAPH5_TO_YEAR}"
         ),
     )
+
+    # Step 10. Probability of a second publication within the fixed window.
+    second_publication_probability = (
+        summarize_second_publication_probability_by_entry_year(
+            author_papers,
+            window_years=SECOND_PUBLICATION_WINDOW_YEARS,
+        )
+    )
+    second_publication_output = (
+        output_dir
+        / "Step10_SecondPublicationWithin5YearsProbability_ByEntryYear.csv"
+    )
+    write_csv(second_publication_probability, second_publication_output)
+    second_publication_plot = (
+        output_dir
+        / "Step10_SecondPublicationWithin5YearsProbability_ByEntryYear.png"
+    )
+    plot_second_publication_probability_by_entry_year(
+        second_publication_probability,
+        second_publication_plot,
+        analysis_label=analysis_label,
+        window_years=SECOND_PUBLICATION_WINDOW_YEARS,
+    )
+    observation_end_year = (
+        int(second_publication_probability["observation_end_year"].max())
+        if not second_publication_probability.empty
+        else 0
+    )
+    print_progress(
+        step=10,
+        scope=analysis_label,
+        message=(
+            f"calculated probabilities of a second publication within "
+            f"{SECOND_PUBLICATION_WINDOW_YEARS} years for "
+            f"{len(second_publication_probability):,} annual entry cohorts through "
+            f"{observation_end_year}; wrote the CSV and static graph"
+        ),
+    )
+    if not second_publication_probability.empty:
+        print(
+            second_publication_probability[
+                [
+                    "entry_cohort_year",
+                    "number_of_entry_authors",
+                    "authors_with_second_publication_within_window",
+                    "probability_second_publication_within_window",
+                    "available_followup_years",
+                ]
+            ].to_string(index=False),
+            flush=True,
+        )
 
     return {
         "analysis": analysis_label,
         "paper_author_rows": len(data),
         "unique_papers": int(paper_years["doi_full"].nunique()),
         "unique_authors": int(author_papers["author_id"].nunique()),
+        "second_publication_cohorts": len(second_publication_probability),
         "output_directory": str(output_dir),
     }
 
@@ -533,6 +629,36 @@ def prepare_author_papers(data: pd.DataFrame) -> pd.DataFrame:
     return author_papers.drop_duplicates(["author_id", "doi_full"]).reset_index(
         drop=True
     )
+
+
+def restrict_to_complete_author_followup_window(
+    author_papers: pd.DataFrame,
+    followup_years: int,
+) -> pd.DataFrame:
+    if author_papers.empty:
+        return author_papers.copy()
+
+    restricted = author_papers.copy()
+    observation_end_year = int(restricted["publication_year"].max())
+    restricted["first_top5_publication_year"] = restricted.groupby(
+        "author_id"
+    )["publication_year"].transform("min")
+    restricted["followup_window_end_year"] = (
+        restricted["first_top5_publication_year"] + followup_years
+    )
+    restricted["years_since_first_publication"] = (
+        restricted["publication_year"]
+        - restricted["first_top5_publication_year"]
+    )
+    complete_window = restricted["followup_window_end_year"].le(
+        observation_end_year
+    )
+    within_window = restricted["years_since_first_publication"].between(
+        0,
+        followup_years,
+        inclusive="both",
+    )
+    return restricted.loc[complete_window & within_window].copy()
 
 
 def rolling_top_author_paper_shares(
@@ -765,6 +891,9 @@ def consecutive_publication_gaps(author_papers: pd.DataFrame) -> pd.DataFrame:
         + gaps["to_publication_number"].astype(str)
     )
     gaps["first_top5_publication_year"] = gaps["author_id"].map(first_year)
+    gaps["years_since_first_publication"] = (
+        gaps["publication_year"] - gaps["first_top5_publication_year"]
+    )
     gaps["entry_cohort"] = gaps["first_top5_publication_year"].apply(
         author_entry_cohort
     )
@@ -774,6 +903,7 @@ def consecutive_publication_gaps(author_papers: pd.DataFrame) -> pd.DataFrame:
             "final_first_name",
             "final_last_name",
             "first_top5_publication_year",
+            "years_since_first_publication",
             "entry_cohort",
             "doi_full",
             "from_publication_number",
@@ -786,8 +916,19 @@ def consecutive_publication_gaps(author_papers: pd.DataFrame) -> pd.DataFrame:
     ].copy()
 
 
-def summarize_publication_gaps_by_cohort(gaps: pd.DataFrame) -> pd.DataFrame:
-    selected = gaps.loc[gaps["entry_cohort"].ne("")].copy()
+def summarize_publication_gaps_by_cohort(
+    gaps: pd.DataFrame,
+    followup_window_years: int,
+    observation_end_year: int,
+) -> pd.DataFrame:
+    selected = gaps.loc[
+        gaps["entry_cohort"].ne("")
+        & gaps["years_since_first_publication"].between(
+            0,
+            followup_window_years,
+            inclusive="both",
+        )
+    ].copy()
     if selected.empty:
         return pd.DataFrame()
     summary = (
@@ -802,6 +943,7 @@ def summarize_publication_gaps_by_cohort(gaps: pd.DataFrame) -> pd.DataFrame:
         .agg(
             number_of_authors=("author_id", "nunique"),
             average_gap_years=("gap_years", "mean"),
+            gap_standard_deviation=("gap_years", "std"),
             median_gap_years=("gap_years", "median"),
             share_same_year=("gap_years", lambda values: values.eq(0).mean()),
         )
@@ -816,16 +958,47 @@ def summarize_publication_gaps_by_cohort(gaps: pd.DataFrame) -> pd.DataFrame:
         ["_cohort_order", "to_publication_number"],
         kind="mergesort",
     ).drop(columns="_cohort_order")
+    summary.insert(0, "followup_window_years", followup_window_years)
+    summary.insert(1, "observation_end_year", observation_end_year)
+    summary.insert(2, "complete_followup_window_required", 1)
+    summary = add_gap_confidence_intervals(summary)
     return round_columns(
         summary.reset_index(drop=True),
-        ["average_gap_years", "median_gap_years", "share_same_year"],
+        [
+            "average_gap_years",
+            "gap_standard_deviation",
+            "gap_standard_error",
+            "gap_ci_95_lower",
+            "gap_ci_95_upper",
+            "median_gap_years",
+            "share_same_year",
+        ],
     )
 
 
 def summarize_first_to_second_gap_by_first_year(
     gaps: pd.DataFrame,
+    from_year: int | None = None,
+    to_year: int | None = None,
+    maximum_gap_years: int | None = None,
 ) -> pd.DataFrame:
     selected = gaps.loc[gaps["from_publication_number"].eq(1)].copy()
+    if from_year is not None:
+        selected = selected.loc[
+            selected["previous_publication_year"].ge(from_year)
+        ]
+    if to_year is not None:
+        selected = selected.loc[
+            selected["previous_publication_year"].le(to_year)
+        ]
+    if maximum_gap_years is not None:
+        selected = selected.loc[
+            selected["gap_years"].between(
+                0,
+                maximum_gap_years,
+                inclusive="both",
+            )
+        ]
     if selected.empty:
         return pd.DataFrame()
     summary = (
@@ -840,16 +1013,143 @@ def summarize_first_to_second_gap_by_first_year(
         .agg(
             number_of_authors=("author_id", "nunique"),
             average_gap_years=("gap_years", "mean"),
+            gap_standard_deviation=("gap_years", "std"),
             median_gap_years=("gap_years", "median"),
             share_same_year=("gap_years", lambda values: values.eq(0).mean()),
         )
         .reset_index()
         .sort_values("previous_publication_year")
     )
+    summary.insert(0, "entry_year_start", from_year)
+    summary.insert(1, "entry_year_end", to_year)
+    summary.insert(2, "maximum_gap_years_condition", maximum_gap_years)
+    summary = add_gap_confidence_intervals(summary)
     return round_columns(
         summary,
-        ["average_gap_years", "median_gap_years", "share_same_year"],
+        [
+            "average_gap_years",
+            "gap_standard_deviation",
+            "gap_standard_error",
+            "gap_ci_95_lower",
+            "gap_ci_95_upper",
+            "median_gap_years",
+            "share_same_year",
+        ],
     )
+
+
+def summarize_second_publication_probability_by_entry_year(
+    author_papers: pd.DataFrame,
+    window_years: int,
+) -> pd.DataFrame:
+    columns = [
+        "entry_cohort_year",
+        "repeat_publication_window_years",
+        "observation_start_year",
+        "observation_end_year",
+        "available_followup_years",
+        "complete_followup_window",
+        "number_of_entry_authors",
+        "authors_with_second_publication_within_window",
+        "authors_with_observed_second_after_window",
+        "authors_with_no_observed_second_publication",
+        "authors_without_second_publication_within_window",
+        "probability_second_publication_within_window",
+    ]
+    if author_papers.empty:
+        return pd.DataFrame(columns=columns)
+
+    ordered_papers = author_papers.sort_values(
+        ["author_id", "publication_year", "doi_full"],
+        kind="mergesort",
+    ).copy()
+    ordered_papers["publication_number"] = (
+        ordered_papers.groupby("author_id").cumcount() + 1
+    )
+    first_publications = ordered_papers.loc[
+        ordered_papers["publication_number"].eq(1),
+        ["author_id", "publication_year"],
+    ].rename(columns={"publication_year": "first_top5_publication_year"})
+    second_publications = ordered_papers.loc[
+        ordered_papers["publication_number"].eq(2),
+        ["author_id", "publication_year"],
+    ].rename(columns={"publication_year": "second_top5_publication_year"})
+    author_summary = first_publications.merge(
+        second_publications,
+        on="author_id",
+        how="left",
+        validate="1:1",
+    )
+    author_summary["years_to_second_publication"] = (
+        author_summary["second_top5_publication_year"]
+        - author_summary["first_top5_publication_year"]
+    )
+    author_summary["second_publication_within_window"] = (
+        author_summary["years_to_second_publication"].between(
+            0,
+            window_years,
+            inclusive="both",
+        )
+    )
+    observation_start_year = int(author_papers["publication_year"].min())
+    observation_end_year = int(author_papers["publication_year"].max())
+    author_summary = author_summary.loc[
+        author_summary["first_top5_publication_year"].add(window_years).le(
+            observation_end_year
+        )
+    ].copy()
+    rows = []
+    for cohort_year, cohort in author_summary.groupby(
+        "first_top5_publication_year",
+        sort=True,
+    ):
+        cohort_year = int(cohort_year)
+        number_of_authors = int(cohort["author_id"].nunique())
+        authors_with_second_within_window = int(
+            cohort["second_publication_within_window"].sum()
+        )
+        has_observed_second = cohort["second_top5_publication_year"].notna()
+        authors_with_second_after_window = int(
+            (
+                has_observed_second
+                & cohort["years_to_second_publication"].gt(window_years)
+            ).sum()
+        )
+        authors_with_no_second = int((~has_observed_second).sum())
+        rows.append(
+            {
+                "entry_cohort_year": cohort_year,
+                "repeat_publication_window_years": window_years,
+                "observation_start_year": observation_start_year,
+                "observation_end_year": observation_end_year,
+                "available_followup_years": (
+                    observation_end_year - cohort_year
+                ),
+                "complete_followup_window": 1,
+                "number_of_entry_authors": number_of_authors,
+                "authors_with_second_publication_within_window": (
+                    authors_with_second_within_window
+                ),
+                "authors_with_observed_second_after_window": (
+                    authors_with_second_after_window
+                ),
+                "authors_with_no_observed_second_publication": (
+                    authors_with_no_second
+                ),
+                "authors_without_second_publication_within_window": (
+                    number_of_authors - authors_with_second_within_window
+                ),
+                "probability_second_publication_within_window": (
+                    round(
+                        authors_with_second_within_window / number_of_authors,
+                        6,
+                    )
+                    if number_of_authors
+                    else pd.NA
+                ),
+            }
+        )
+    return pd.DataFrame(rows, columns=columns)
 
 
 def author_entry_cohort(year) -> str:
@@ -875,6 +1175,27 @@ def longest_nonblank(values: pd.Series) -> str:
     if cleaned.empty:
         return ""
     return max(cleaned, key=lambda value: (len(value), value))
+
+
+def add_gap_confidence_intervals(data: pd.DataFrame) -> pd.DataFrame:
+    from scipy.stats import t as student_t
+
+    result = data.copy()
+    counts = pd.to_numeric(result["number_of_authors"], errors="coerce")
+    standard_deviation = pd.to_numeric(
+        result["gap_standard_deviation"],
+        errors="coerce",
+    )
+    result["gap_standard_error"] = standard_deviation / counts.pow(0.5)
+    valid = counts.gt(1) & result["gap_standard_error"].notna()
+    critical_values = pd.Series(float("nan"), index=result.index, dtype=float)
+    critical_values.loc[valid] = counts.loc[valid].apply(
+        lambda count: student_t.ppf(0.975, int(count) - 1)
+    )
+    margin = critical_values * result["gap_standard_error"]
+    result["gap_ci_95_lower"] = result["average_gap_years"] - margin
+    result["gap_ci_95_upper"] = result["average_gap_years"] + margin
+    return result
 
 
 def round_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -2443,6 +2764,7 @@ def write_interactive_publication_gaps_by_cohort(
     output_path: Path,
     analysis_label: str,
     minimum_authors: int,
+    followup_window_years: int,
 ) -> None:
     if data.empty:
         return
@@ -2450,16 +2772,20 @@ def write_interactive_publication_gaps_by_cohort(
         data["number_of_authors"].ge(minimum_authors)
         & data["to_publication_number"].between(2, 10, inclusive="both")
     ].copy()
-    plot_data["average_gap_years"] = pd.to_numeric(
-        plot_data["average_gap_years"],
-        errors="coerce",
-    )
-    plot_data["number_of_authors"] = pd.to_numeric(
-        plot_data["number_of_authors"],
-        errors="coerce",
-    )
+    for column in [
+        "average_gap_years",
+        "number_of_authors",
+        "gap_ci_95_lower",
+        "gap_ci_95_upper",
+    ]:
+        plot_data[column] = pd.to_numeric(plot_data[column], errors="coerce")
     plot_data = plot_data.dropna(
-        subset=["average_gap_years", "number_of_authors"]
+        subset=[
+            "average_gap_years",
+            "number_of_authors",
+            "gap_ci_95_lower",
+            "gap_ci_95_upper",
+        ]
     )
     if plot_data.empty:
         return
@@ -2476,6 +2802,8 @@ def write_interactive_publication_gaps_by_cohort(
                 int(row.to_publication_number),
                 round(float(row.average_gap_years), 6),
                 int(row.number_of_authors),
+                round(float(row.gap_ci_95_lower), 6),
+                round(float(row.gap_ci_95_upper), 6),
             ]
             for row in cohort.itertuples(index=False)
         ]
@@ -2485,14 +2813,14 @@ def write_interactive_publication_gaps_by_cohort(
     scope_label = publication_scope_label(analysis_label)
     subtitle = (
         f"Average years between consecutive publications in {scope_label}, "
-        f"by cohort of first publication in {scope_label}"
+        f"during the first {followup_window_years} years after entry"
     )
     document = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Observed publication gaps are shorter for newer cohorts</title>
+  <title>Publication gaps within the first __FOLLOWUP_WINDOW_YEARS__ years vary across entry cohorts</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -2501,7 +2829,6 @@ def write_interactive_publication_gaps_by_cohort(
       --muted-foreground: #68737e;
       --grid: #dce1e6;
       --axis: #aeb7c0;
-      --cohort-1980s: #e67e22;
       --cohort-1990s: #a8afb7;
       --cohort-2000s: #68737e;
       --cohort-2010s: #087e73;
@@ -2515,7 +2842,6 @@ def write_interactive_publication_gaps_by_cohort(
         --muted-foreground: #b2bac2;
         --grid: #343a40;
         --axis: #626c75;
-        --cohort-1980s: #f3a35c;
         --cohort-1990s: #89939d;
         --cohort-2000s: #aeb7c0;
         --cohort-2010s: #46c6b8;
@@ -2618,10 +2944,23 @@ def write_interactive_publication_gaps_by_cohort(
       opacity: 0.32;
       transition: opacity 160ms ease, stroke-width 160ms ease;
     }
-    .series-line[data-series="1981-1990"] { stroke: var(--cohort-1980s); }
-    .series-line[data-series="1991-2000"] { stroke: var(--cohort-1990s); }
-    .series-line[data-series="2001-2010"] { stroke: var(--cohort-2000s); }
-    .series-line[data-series="2011-2020"] { stroke: var(--cohort-2010s); }
+    .series-line[data-series="1991-1995"] { stroke: var(--cohort-1990s); }
+    .series-line[data-series="2001-2005"] { stroke: var(--cohort-2000s); }
+    .series-line[data-series="2011-2015"] { stroke: var(--cohort-2010s); }
+    .ci-line {
+      fill: none;
+      stroke-width: 1.2;
+      opacity: 0.32;
+      pointer-events: none;
+      transition: opacity 160ms ease, stroke-width 160ms ease;
+    }
+    .ci-line[data-series="1991-1995"] { stroke: var(--cohort-1990s); }
+    .ci-line[data-series="2001-2005"] { stroke: var(--cohort-2000s); }
+    .ci-line[data-series="2011-2015"] { stroke: var(--cohort-2010s); }
+    .ci-line.is-active {
+      stroke-width: 1.8;
+      opacity: 1;
+    }
     .series-line.is-active {
       stroke-width: 4;
       opacity: 1;
@@ -2651,10 +2990,9 @@ def write_interactive_publication_gaps_by_cohort(
       pointer-events: none;
       transition: opacity 160ms ease, stroke-width 160ms ease;
     }
-    .point-marker[data-series="1981-1990"] { fill: var(--cohort-1980s); }
-    .point-marker[data-series="1991-2000"] { fill: var(--cohort-1990s); }
-    .point-marker[data-series="2001-2010"] { fill: var(--cohort-2000s); }
-    .point-marker[data-series="2011-2020"] { fill: var(--cohort-2010s); }
+    .point-marker[data-series="1991-1995"] { fill: var(--cohort-1990s); }
+    .point-marker[data-series="2001-2005"] { fill: var(--cohort-2000s); }
+    .point-marker[data-series="2011-2015"] { fill: var(--cohort-2010s); }
     .point-marker.is-active {
       stroke-width: 2;
       opacity: 1;
@@ -2697,6 +3035,7 @@ def write_interactive_publication_gaps_by_cohort(
       .grid-line,
       .axis-line,
       .series-line,
+      .ci-line,
       .point-marker,
       .hit-line,
       .annotation-line { vector-effect: non-scaling-stroke; }
@@ -2714,20 +3053,19 @@ def write_interactive_publication_gaps_by_cohort(
 </head>
 <body>
   <main id="publication-gap-chart" class="chart">
-    <h1>Observed publication gaps are shorter for newer cohorts</h1>
+    <h1>Publication gaps within the first __FOLLOWUP_WINDOW_YEARS__ years vary across entry cohorts</h1>
     <p class="subtitle">__SUBTITLE__</p>
     <div class="legend" aria-label="Choose the emphasized first-publication cohort">
-      <button type="button" data-series="1981-1990" aria-pressed="false"><span class="swatch circle" style="--swatch: var(--cohort-1980s)"></span>1981-1990</button>
-      <button type="button" data-series="1991-2000" aria-pressed="false"><span class="swatch square" style="--swatch: var(--cohort-1990s)"></span>1991-2000</button>
-      <button type="button" data-series="2001-2010" aria-pressed="false"><span class="swatch diamond" style="--swatch: var(--cohort-2000s)"></span>2001-2010</button>
-      <button type="button" data-series="2011-2020" aria-pressed="true"><span class="swatch triangle" style="--swatch: var(--cohort-2010s)"></span>2011-2020</button>
+      <button type="button" data-series="1991-1995" aria-pressed="false"><span class="swatch square" style="--swatch: var(--cohort-1990s)"></span>1991-1995</button>
+      <button type="button" data-series="2001-2005" aria-pressed="false"><span class="swatch diamond" style="--swatch: var(--cohort-2000s)"></span>2001-2005</button>
+      <button type="button" data-series="2011-2015" aria-pressed="true"><span class="swatch triangle" style="--swatch: var(--cohort-2010s)"></span>2011-2015</button>
     </div>
     <svg class="chart-svg" viewBox="0 0 980 560" role="img" aria-labelledby="chart-title chart-description">
       <title id="chart-title">Average publication gaps by first-publication cohort</title>
-      <desc id="chart-description">Hover over a cohort line to inspect the publication transition, average gap, and number of authors.</desc>
+      <desc id="chart-description">Hover over a cohort line to inspect the publication transition, average gap, 95% confidence interval, and number of authors.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> Values show mean years between consecutive publications in __SCOPE_LABEL__. Cohorts are defined by the year of first publication in __SCOPE_LABEL__. Later publication numbers include only authors who reach that stage.</p>
+    <p class="note"><strong>Note:</strong> Every author has a complete __FOLLOWUP_WINDOW_YEARS__-year follow-up window. Only publications within __FOLLOWUP_WINDOW_YEARS__ years of the first publication in __SCOPE_LABEL__ are included. Later publication numbers include only authors who reach that stage within the window. Whiskers show 95% Student's t confidence intervals for the mean.</p>
   </main>
   <script>
     (() => {
@@ -2757,7 +3095,7 @@ def write_interactive_publication_gaps_by_cohort(
       const height = 560;
       const margin = { top: 24, right: 34, bottom: 76, left: 92 };
       const keys = Object.keys(series);
-      const defaultSeries = keys.includes("2011-2020") ? "2011-2020" : keys[keys.length - 1];
+      const defaultSeries = keys.includes("2011-2015") ? "2011-2015" : keys[keys.length - 1];
       const points = Object.values(series).flat();
       const observedMax = Math.max(...points.map(point => point[1]));
       const tickMax = Math.max(1, Math.ceil(observedMax));
@@ -2788,8 +3126,26 @@ def write_interactive_publication_gaps_by_cohort(
       add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Average gap from previous publication (years)");
 
       const lineNodes = {};
+      const ciNodes = {};
       const pointNodes = {};
       const hitNodes = {};
+      const addConfidenceInterval = (key, point) => {
+        const [publicationNumber, , , lower, upper] = point;
+        const pointX = x(publicationNumber);
+        const lowerY = y(lower);
+        const upperY = y(upper);
+        const capWidth = 4;
+        const path = [
+          `M${pointX},${lowerY} L${pointX},${upperY}`,
+          `M${pointX - capWidth},${lowerY} L${pointX + capWidth},${lowerY}`,
+          `M${pointX - capWidth},${upperY} L${pointX + capWidth},${upperY}`
+        ].join(" ");
+        return add("path", {
+          class: `ci-line${key === defaultSeries ? " is-active" : ""}`,
+          "data-series": key,
+          d: path
+        });
+      };
       const addPointMarker = (key, publicationNumber, gap) => {
         const pointX = x(publicationNumber);
         const pointY = y(gap);
@@ -2798,19 +3154,17 @@ def write_interactive_publication_gaps_by_cohort(
           "data-series": key,
           "data-publication-number": publicationNumber
         };
-        if (key === "1981-1990") {
-          return add("circle", { ...common, cx: pointX, cy: pointY, r: 4.4 });
-        }
-        if (key === "1991-2000") {
+        if (key === "1991-1995") {
           return add("rect", { ...common, x: pointX - 4.2, y: pointY - 4.2, width: 8.4, height: 8.4 });
         }
-        if (key === "2001-2010") {
+        if (key === "2001-2005") {
           return add("rect", { ...common, x: pointX - 3.8, y: pointY - 3.8, width: 7.6, height: 7.6, transform: `rotate(45 ${pointX} ${pointY})` });
         }
         return add("polygon", { ...common, points: `${pointX},${pointY - 5.2} ${pointX + 5.0},${pointY + 4.1} ${pointX - 5.0},${pointY + 4.1}` });
       };
       keys.forEach(key => {
         const path = series[key].map(([publicationNumber, gap], index) => `${index ? "L" : "M"}${x(publicationNumber).toFixed(2)},${y(gap).toFixed(2)}`).join(" ");
+        ciNodes[key] = series[key].map(point => addConfidenceInterval(key, point));
         lineNodes[key] = add("path", { class: `series-line${key === defaultSeries ? " is-active" : ""}`, "data-series": key, d: path });
         pointNodes[key] = series[key].map(([publicationNumber, gap]) => addPointMarker(key, publicationNumber, gap));
         hitNodes[key] = add("path", { class: "hit-line", "data-series": key, d: path });
@@ -2821,14 +3175,14 @@ def write_interactive_publication_gaps_by_cohort(
         button.setAttribute("aria-pressed", button.dataset.series === defaultSeries ? "true" : "false");
       });
 
-      if (showAnnotation && series["1981-1990"] && series["2011-2020"]) {
-        const oldest = series["1981-1990"].find(point => point[0] === 2);
-        const newest = series["2011-2020"].find(point => point[0] === 2);
+      if (showAnnotation && series["1991-1995"] && series["2011-2015"]) {
+        const oldest = series["1991-1995"].find(point => point[0] === 2);
+        const newest = series["2011-2015"].find(point => point[0] === 2);
         if (oldest && newest) {
           const annotationGap = Math.min(yMax - 0.15, Math.max(oldest[1], newest[1]) + 1.0);
           add("line", { class: "annotation-line", x1: x(3.45), y1: y(annotationGap - 0.15), x2: x(newest[0]), y2: y(newest[1]) });
-          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap) }, "The observed gap from the 1st to 2nd publication declined");
-          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap - 0.32) }, `from about ${oldest[1].toFixed(1)} to ${newest[1].toFixed(1)} years`);
+          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap) }, `The 1st-to-2nd gap was ${oldest[1].toFixed(1)} years for 1991-1995`);
+          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap - 0.32) }, `and ${newest[1].toFixed(1)} years for 2011-2015`);
         }
       }
 
@@ -2836,6 +3190,9 @@ def write_interactive_publication_gaps_by_cohort(
       const activate = key => {
         keys.forEach(seriesKey => {
           lineNodes[seriesKey].classList.toggle("is-active", seriesKey === key);
+          ciNodes[seriesKey].forEach(interval => {
+            interval.classList.toggle("is-active", seriesKey === key);
+          });
           pointNodes[seriesKey].forEach(point => {
             point.classList.toggle("is-active", seriesKey === key);
           });
@@ -2861,7 +3218,7 @@ def write_interactive_publication_gaps_by_cohort(
         pointNodes[key].forEach((point, index) => {
           point.classList.toggle("is-hover", index === nearestIndex);
         });
-        tooltip.textContent = `${key} cohort - ${transitionLabels[nearest[0]]}: ${nearest[1].toFixed(2)} years (${nearest[2].toLocaleString()} authors)`;
+        tooltip.textContent = `${key} cohort - ${transitionLabels[nearest[0]]}: ${nearest[1].toFixed(2)} years (95% CI ${nearest[3].toFixed(2)}-${nearest[4].toFixed(2)}; ${nearest[2].toLocaleString()} authors)`;
         tooltip.hidden = false;
         const rootRect = root.getBoundingClientRect();
         const markLeft = svgRect.left - rootRect.left + x(nearest[0]) / width * svgRect.width;
@@ -2911,6 +3268,10 @@ def write_interactive_publication_gaps_by_cohort(
             "__SHOW_ANNOTATION__",
             json.dumps(analysis_label == "All fields"),
         )
+        .replace(
+            "__FOLLOWUP_WINDOW_YEARS__",
+            str(followup_window_years),
+        )
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(document, encoding="utf-8")
@@ -2921,6 +3282,7 @@ def plot_publication_gaps_by_cohort(
     output_path: Path,
     analysis_label: str,
     minimum_authors: int,
+    followup_window_years: int,
 ) -> None:
     import matplotlib.pyplot as plt
 
@@ -2934,18 +3296,7 @@ def plot_publication_gaps_by_cohort(
         return
     figure, axis = plt.subplots(figsize=(11, 6.5))
     line_styles = {
-        "1981-1990": {
-            "color": "#E67E22",
-            "markerfacecolor": "#E67E22",
-            "linewidth": 2.2,
-            "alpha": 0.82,
-            "zorder": 2,
-            "marker": "o",
-            "markersize": 5.8,
-            "markeredgecolor": "white",
-            "markeredgewidth": 0.8,
-        },
-        "1991-2000": {
+        "1991-1995": {
             "color": "#A8AFB7",
             "markerfacecolor": "#A8AFB7",
             "linewidth": 1.8,
@@ -2956,7 +3307,7 @@ def plot_publication_gaps_by_cohort(
             "markeredgecolor": "white",
             "markeredgewidth": 0.8,
         },
-        "2001-2010": {
+        "2001-2005": {
             "color": "#68737E",
             "markerfacecolor": "#68737E",
             "linewidth": 2.0,
@@ -2967,7 +3318,7 @@ def plot_publication_gaps_by_cohort(
             "markeredgecolor": "white",
             "markeredgewidth": 0.8,
         },
-        "2011-2020": {
+        "2011-2015": {
             "color": "#087E73",
             "markerfacecolor": "#087E73",
             "linewidth": 3.4,
@@ -2983,14 +3334,29 @@ def plot_publication_gaps_by_cohort(
         cohort = plot_data.loc[plot_data["entry_cohort"].eq(cohort_label)]
         if cohort.empty:
             continue
-        axis.plot(
+        lower_error = (
+            cohort["average_gap_years"] - cohort["gap_ci_95_lower"]
+        )
+        upper_error = (
+            cohort["gap_ci_95_upper"] - cohort["average_gap_years"]
+        )
+        style = line_styles[cohort_label]
+        axis.errorbar(
             cohort["to_publication_number"],
             cohort["average_gap_years"],
+            yerr=[lower_error, upper_error],
             label=cohort_label,
-            **line_styles[cohort_label],
+            capsize=3,
+            capthick=1.0,
+            elinewidth=1.0,
+            ecolor=style["color"],
+            **style,
         )
     axis.set_title(
-        "Observed publication gaps are shorter for newer cohorts",
+        (
+            f"Publication gaps within the first {followup_window_years} years "
+            "vary across entry cohorts"
+        ),
         loc="left",
         pad=38,
         fontsize=17,
@@ -2999,7 +3365,7 @@ def plot_publication_gaps_by_cohort(
     scope_label = publication_scope_label(analysis_label)
     subtitle = (
         f"Average years between consecutive publications in {scope_label}, "
-        f"by cohort of first publication in {scope_label}"
+        f"during the first {followup_window_years} years after entry"
     )
     axis.text(
         0,
@@ -3043,19 +3409,24 @@ def plot_publication_gaps_by_cohort(
     )
 
     if analysis_label == "All fields":
-        newest_first_gap = plot_data.loc[
-            plot_data["entry_cohort"].eq("2011-2020")
+        oldest_first_gap = plot_data.loc[
+            plot_data["entry_cohort"].eq("1991-1995")
             & plot_data["to_publication_number"].eq(2)
         ]
-        if not newest_first_gap.empty:
-            target = newest_first_gap.iloc[0]
+        newest_first_gap = plot_data.loc[
+            plot_data["entry_cohort"].eq("2011-2015")
+            & plot_data["to_publication_number"].eq(2)
+        ]
+        if not oldest_first_gap.empty and not newest_first_gap.empty:
+            oldest_gap = float(oldest_first_gap.iloc[0]["average_gap_years"])
+            newest_gap = float(newest_first_gap.iloc[0]["average_gap_years"])
             axis.annotate(
                 (
-                    "The observed gap from the 1st to 2nd publication "
-                    "declined\nfrom about 5.9 to 3.5 years"
+                    f"The 1st-to-2nd gap was {oldest_gap:.1f} years for "
+                    f"1991-1995\nand {newest_gap:.1f} years for 2011-2015"
                 ),
-                xy=(2, float(target["average_gap_years"])),
-                xytext=(3.35, 6.15),
+                xy=(2, newest_gap),
+                xytext=(3.25, 4.25),
                 color="#4E5965",
                 fontsize=10,
                 ha="left",
@@ -3071,10 +3442,12 @@ def plot_publication_gaps_by_cohort(
         0.115,
         0.025,
         (
-            f"Note: Values show mean years between consecutive publications in "
-            f"{scope_label}. Cohorts are defined by the year of first publication "
-            f"in {scope_label}.\nLater publication numbers include only authors "
-            "who reach that stage."
+            f"Note: Every author has a complete {followup_window_years}-year "
+            f"follow-up window. Only publications within {followup_window_years} "
+            f"years of the first publication in {scope_label} are included.\n"
+            "Later publication numbers include only authors who reach that stage "
+            "within the window. Whiskers show 95% Student's t confidence "
+            "intervals for the mean."
         ),
         color="#69727D",
         fontsize=9,
@@ -3094,6 +3467,7 @@ def write_interactive_first_to_second_gap_by_first_year(
     analysis_label: str,
     from_year: int,
     to_year: int,
+    maximum_gap_years: int,
 ) -> None:
     if data.empty:
         return
@@ -3104,10 +3478,20 @@ def write_interactive_first_to_second_gap_by_first_year(
             inclusive="both",
         )
     ].copy()
-    for column in ["average_gap_years", "number_of_authors"]:
+    for column in [
+        "average_gap_years",
+        "number_of_authors",
+        "gap_ci_95_lower",
+        "gap_ci_95_upper",
+    ]:
         plot_data[column] = pd.to_numeric(plot_data[column], errors="coerce")
     plot_data = plot_data.dropna(
-        subset=["average_gap_years", "number_of_authors"]
+        subset=[
+            "average_gap_years",
+            "number_of_authors",
+            "gap_ci_95_lower",
+            "gap_ci_95_upper",
+        ]
     ).sort_values("previous_publication_year")
     if plot_data.empty:
         return
@@ -3117,18 +3501,19 @@ def write_interactive_first_to_second_gap_by_first_year(
             int(row.previous_publication_year),
             round(float(row.average_gap_years), 6),
             int(row.number_of_authors),
+            round(float(row.gap_ci_95_lower), 6),
+            round(float(row.gap_ci_95_upper), 6),
         ]
         for row in plot_data.itertuples(index=False)
     ]
     scope_label = publication_scope_label(analysis_label)
     graph_title = (
-        "The observed gap to a second top-five publication has narrowed"
-        if analysis_label == "All fields"
-        else f"The observed gap to a second publication in {scope_label} has narrowed"
+        f"Average time to a second publication in {scope_label}, "
+        f"within {maximum_gap_years} years"
     )
     subtitle = (
-        f"Average years between authors' first and second publications in "
-        f"{scope_label}, by year of first publication in {scope_label}"
+        f"By year of authors' first publication in {scope_label}, "
+        f"{from_year}-{to_year}"
     )
     document = """<!doctype html>
 <html lang="en">
@@ -3225,6 +3610,18 @@ def write_interactive_first_to_second_gap_by_first_year(
       transition: stroke-width 140ms ease;
     }
     .gap-line.is-active { stroke-width: 4; }
+    .ci-line {
+      fill: none;
+      stroke: var(--series);
+      stroke-width: 1.2;
+      opacity: 0.75;
+      pointer-events: none;
+      transition: stroke-width 140ms ease, opacity 140ms ease;
+    }
+    .ci-line.is-active {
+      stroke-width: 1.8;
+      opacity: 1;
+    }
     .hit-line {
       fill: none;
       stroke: transparent;
@@ -3266,6 +3663,7 @@ def write_interactive_first_to_second_gap_by_first_year(
       .grid-line,
       .axis-line,
       .gap-line,
+      .ci-line,
       .hit-line,
       .hover-marker,
       .annotation-line { vector-effect: non-scaling-stroke; }
@@ -3276,7 +3674,8 @@ def write_interactive_first_to_second_gap_by_first_year(
       .tooltip { white-space: normal; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .gap-line { transition: none; }
+      .gap-line,
+      .ci-line { transition: none; }
     }
   </style>
 </head>
@@ -3286,10 +3685,10 @@ def write_interactive_first_to_second_gap_by_first_year(
     <p class="subtitle">__SUBTITLE__</p>
     <svg class="chart-svg" viewBox="0 0 900 520" role="img" aria-labelledby="chart-title chart-description">
       <title id="chart-title">Average years between first and second publications in __SCOPE_LABEL__</title>
-      <desc id="chart-description">Hover over the line to inspect the first-publication year, average gap to a second publication, and number of authors.</desc>
+      <desc id="chart-description">Hover over the line to inspect the first-publication year, conditional average gap to a second publication, 95% confidence interval, and number of authors.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> Cohorts are defined by the year of an author&rsquo;s first publication in __SCOPE_LABEL__. Values show the mean observed time to a second publication in __SCOPE_LABEL__. Recent cohorts may have incomplete follow-up.</p>
+    <p class="note"><strong>Note:</strong> Entry years are restricted to __FROM_YEAR__&ndash;__TO_YEAR__. Values are conditional on an observed second publication in __SCOPE_LABEL__ within __MAX_GAP_YEARS__ years of the first. Whiskers show 95% Student's t confidence intervals for the mean. Intervals outside the 3&ndash;5 plotting range are clipped; exact bounds appear in the tooltip and CSV.</p>
   </main>
   <script>
     (() => {
@@ -3304,8 +3703,8 @@ def write_interactive_first_to_second_gap_by_first_year(
       const margin = { top: 18, right: 38, bottom: 62, left: 92 };
       const fromYear = __FROM_YEAR__;
       const toYear = __TO_YEAR__;
-      const gapMin = 2;
-      const gapMax = 7;
+      const gapMin = 3;
+      const gapMax = 5;
       const plotRight = width - margin.right;
       const plotBottom = height - margin.bottom;
       const x = year => margin.left + (year - fromYear) / (toYear - fromYear) * (plotRight - margin.left);
@@ -3329,12 +3728,16 @@ def write_interactive_first_to_second_gap_by_first_year(
       definitions.appendChild(clipPath);
       svg.appendChild(definitions);
 
-      for (let value = gapMin; value <= gapMax; value += 1) {
+      for (let value = gapMin; value <= gapMax; value += 0.5) {
         const position = y(value);
         add("line", { class: "grid-line", x1: margin.left, x2: plotRight, y1: position, y2: position });
-        add("text", { class: "tick-label", x: margin.left - 12, y: position + 4, "text-anchor": "end" }, value);
+        const tickLabel = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
+        add("text", { class: "tick-label", x: margin.left - 12, y: position + 4, "text-anchor": "end" }, tickLabel);
       }
-      [1980, 1990, 2000, 2010, 2020].filter(year => year >= fromYear && year <= toYear).forEach(year => {
+      [...new Set([fromYear, 1990, 2000, 2010, toYear])]
+        .filter(year => year >= fromYear && year <= toYear)
+        .sort((left, right) => left - right)
+        .forEach(year => {
         add("text", { class: "tick-label", x: x(year), y: plotBottom + 25, "text-anchor": "middle" }, year);
       });
       add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
@@ -3342,6 +3745,22 @@ def write_interactive_first_to_second_gap_by_first_year(
       add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Year of first publication in __SCOPE_LABEL__");
       add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Years between first and second publication in __SCOPE_LABEL__");
 
+      const ciLines = data.map(([year, , , lower, upper]) => {
+        const pointX = x(year);
+        const lowerY = y(lower);
+        const upperY = y(upper);
+        const capWidth = 4;
+        const intervalPath = [
+          `M${pointX},${lowerY} L${pointX},${upperY}`,
+          `M${pointX - capWidth},${lowerY} L${pointX + capWidth},${lowerY}`,
+          `M${pointX - capWidth},${upperY} L${pointX + capWidth},${upperY}`
+        ].join(" ");
+        return add("path", {
+          class: "ci-line",
+          d: intervalPath,
+          "clip-path": "url(#graph5-plot-clip)"
+        });
+      });
       const path = data.map(([year, gap], index) => `${index ? "L" : "M"}${x(year).toFixed(2)},${y(gap).toFixed(2)}`).join(" ");
       const gapLine = add("path", { class: "gap-line", d: path, "clip-path": "url(#graph5-plot-clip)" });
       if (showAnnotation) {
@@ -3350,9 +3769,11 @@ def write_interactive_first_to_second_gap_by_first_year(
         if (firstPoint && lastPoint) {
           const change = lastPoint[1] - firstPoint[1];
           const sign = change < 0 ? "\u2212" : "+";
-          add("line", { class: "annotation-line", x1: x(2007), y1: y(6.0), x2: x(lastPoint[0]), y2: y(lastPoint[1]) });
-          add("text", { class: "annotation", x: x(2002), y: y(6.35) }, `${sign}${Math.abs(change).toFixed(1)} years`);
-          add("text", { class: "annotation", x: x(2002), y: y(6.05) }, `change from ${fromYear} to ${toYear}`);
+          const annotationTextYear = fromYear + (toYear - fromYear) * 0.63;
+          const annotationLineYear = fromYear + (toYear - fromYear) * 0.77;
+          add("line", { class: "annotation-line", x1: x(annotationLineYear), y1: y(4.55), x2: x(lastPoint[0]), y2: y(lastPoint[1]) });
+          add("text", { class: "annotation", x: x(annotationTextYear), y: y(4.85) }, `${sign}${Math.abs(change).toFixed(1)} years`);
+          add("text", { class: "annotation", x: x(annotationTextYear), y: y(4.68) }, `change from ${fromYear} to ${toYear}`);
         }
       }
       const marker = add("circle", { class: "hover-marker", r: 5 });
@@ -3368,7 +3789,8 @@ def write_interactive_first_to_second_gap_by_first_year(
         marker.setAttribute("cy", y(nearest[1]));
         marker.style.display = "block";
         gapLine.classList.add("is-active");
-        tooltip.textContent = `${nearest[0]} \u00b7 ${nearest[1].toFixed(2)} years \u00b7 ${nearest[2].toLocaleString()} authors`;
+        ciLines.forEach(interval => interval.classList.add("is-active"));
+        tooltip.textContent = `${nearest[0]} \u00b7 ${nearest[1].toFixed(2)} years \u00b7 95% CI ${nearest[3].toFixed(2)}-${nearest[4].toFixed(2)} \u00b7 ${nearest[2].toLocaleString()} authors`;
         tooltip.hidden = false;
         const rootRect = root.getBoundingClientRect();
         const markLeft = svgRect.left - rootRect.left + x(nearest[0]) / width * svgRect.width;
@@ -3379,6 +3801,7 @@ def write_interactive_first_to_second_gap_by_first_year(
       const hideTooltip = () => {
         marker.style.display = "none";
         gapLine.classList.remove("is-active");
+        ciLines.forEach(interval => interval.classList.remove("is-active"));
         tooltip.hidden = true;
       };
       hitLine.addEventListener("pointerenter", showTooltip);
@@ -3403,6 +3826,7 @@ def write_interactive_first_to_second_gap_by_first_year(
         )
         .replace("__FROM_YEAR__", str(from_year))
         .replace("__TO_YEAR__", str(to_year))
+        .replace("__MAX_GAP_YEARS__", str(maximum_gap_years))
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(document, encoding="utf-8")
@@ -3414,6 +3838,7 @@ def plot_first_to_second_gap_by_first_year(
     analysis_label: str,
     from_year: int,
     to_year: int,
+    maximum_gap_years: int,
 ) -> None:
     import matplotlib.pyplot as plt
 
@@ -3430,9 +3855,16 @@ def plot_first_to_second_gap_by_first_year(
         return
     plot_data = plot_data.sort_values("previous_publication_year")
     figure, axis = plt.subplots(figsize=(11, 6.5))
-    axis.plot(
+    lower_error = (
+        plot_data["average_gap_years"] - plot_data["gap_ci_95_lower"]
+    )
+    upper_error = (
+        plot_data["gap_ci_95_upper"] - plot_data["average_gap_years"]
+    )
+    axis.errorbar(
         plot_data["previous_publication_year"],
         plot_data["average_gap_years"],
+        yerr=[lower_error, upper_error],
         color="#087E73",
         linewidth=3.2,
         marker="o",
@@ -3441,13 +3873,16 @@ def plot_first_to_second_gap_by_first_year(
         markerfacecolor="#087E73",
         markeredgecolor="white",
         markeredgewidth=0.8,
+        capsize=2.5,
+        capthick=0.9,
+        elinewidth=0.9,
+        ecolor="#087E73",
         zorder=3,
     )
     scope_label = publication_scope_label(analysis_label)
     graph_title = (
-        "The observed gap to a second top-five publication has narrowed"
-        if analysis_label == "All fields"
-        else f"The observed gap to a second publication in {scope_label} has narrowed"
+        f"Average time to a second publication in {scope_label}, "
+        f"within {maximum_gap_years} years"
     )
     axis.set_title(
         graph_title,
@@ -3457,8 +3892,8 @@ def plot_first_to_second_gap_by_first_year(
         fontweight="semibold",
     )
     subtitle = (
-        f"Average years between authors' first and second publications in "
-        f"{scope_label}, by year of first publication in {scope_label}"
+        f"By year of authors' first publication in {scope_label}, "
+        f"{from_year}-{to_year}"
     )
     axis.text(
         0,
@@ -3475,7 +3910,8 @@ def plot_first_to_second_gap_by_first_year(
         f"Years between first and second publication in {scope_label}"
     )
     axis.set_xlim(from_year, to_year)
-    axis.set_ylim(2, 7)
+    axis.set_ylim(3, 5)
+    axis.set_yticks([3, 3.5, 4, 4.5, 5])
     axis.grid(axis="y", color="#D8DDE3", linewidth=0.8, alpha=0.8)
     axis.grid(axis="x", visible=False)
     axis.spines["top"].set_visible(False)
@@ -3501,7 +3937,7 @@ def plot_first_to_second_gap_by_first_year(
                     f"change from {from_year} to {to_year}"
                 ).replace("-", "\N{MINUS SIGN}", 1),
                 xy=(to_year, end_gap),
-                xytext=(2002, 6.25),
+                xytext=(from_year + (to_year - from_year) * 0.63, 4.78),
                 color="#4E5965",
                 fontsize=11,
                 ha="left",
@@ -3517,10 +3953,11 @@ def plot_first_to_second_gap_by_first_year(
         0.115,
         0.025,
         (
-            f"Note: Cohorts are defined by the year of an author's first publication "
-            f"in {scope_label}. Values show the mean observed time to a second "
-            f"publication in {scope_label}.\nRecent cohorts may have incomplete "
-            "follow-up."
+            f"Note: Entry years are restricted to {from_year}-{to_year}. Values are "
+            f"conditional on an observed second publication in {scope_label}\nwithin "
+            f"{maximum_gap_years} years of the first publication. Whiskers show "
+            "95% Student's t confidence intervals for the mean. Intervals outside "
+            "the 3-5 plotting range are clipped; exact bounds appear in the CSV."
         ),
         color="#69727D",
         fontsize=9,
@@ -3531,6 +3968,113 @@ def plot_first_to_second_gap_by_first_year(
         figure,
         output_path,
         tight_layout_rect=(0, 0.10, 1, 1),
+    )
+
+
+def plot_second_publication_probability_by_entry_year(
+    data: pd.DataFrame,
+    output_path: Path,
+    analysis_label: str,
+    window_years: int,
+) -> None:
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import PercentFormatter
+
+    if data.empty:
+        return
+    plot_data = data.copy()
+    plot_data["entry_cohort_year"] = pd.to_numeric(
+        plot_data["entry_cohort_year"],
+        errors="coerce",
+    )
+    plot_data["probability_second_publication_within_window"] = pd.to_numeric(
+        plot_data["probability_second_publication_within_window"],
+        errors="coerce",
+    )
+    plot_data = plot_data.dropna(
+        subset=[
+            "entry_cohort_year",
+            "probability_second_publication_within_window",
+        ]
+    ).sort_values("entry_cohort_year")
+    if plot_data.empty:
+        return
+
+    first_cohort = int(plot_data["entry_cohort_year"].min())
+    last_cohort = int(plot_data["entry_cohort_year"].max())
+    observation_start_year = int(plot_data["observation_start_year"].min())
+    observation_end_year = int(plot_data["observation_end_year"].max())
+    scope_label = publication_scope_label(analysis_label)
+
+    figure, axis = plt.subplots(figsize=(11, 6.5))
+    axis.plot(
+        plot_data["entry_cohort_year"],
+        plot_data["probability_second_publication_within_window"],
+        color="#087E73",
+        linewidth=2.8,
+        marker="o",
+        markevery=5,
+        markersize=5.2,
+        markerfacecolor="#087E73",
+        markeredgecolor="white",
+        markeredgewidth=0.8,
+        zorder=3,
+    )
+    axis.set_title(
+        f"Probability of a second publication within {window_years} years",
+        loc="left",
+        pad=38,
+        fontsize=17,
+        fontweight="semibold",
+    )
+    axis.text(
+        0,
+        1.015,
+        (
+            f"Share of first-time authors with a second publication in "
+            f"{scope_label} within {window_years} years, by entry year"
+        ),
+        transform=axis.transAxes,
+        color="#69727D",
+        fontsize=11,
+        ha="left",
+        va="bottom",
+    )
+    axis.set_xlabel(f"Year of first observed publication in {scope_label}")
+    axis.set_ylabel(
+        f"Share with a second publication within {window_years} years"
+    )
+    axis.set_xlim(first_cohort, last_cohort)
+    axis.set_ylim(0, 0.70)
+    axis.set_yticks([value / 10 for value in range(0, 8)])
+    axis.yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
+    axis.grid(axis="y", color="#D8DDE3", linewidth=0.8, alpha=0.8)
+    axis.grid(axis="x", visible=False)
+    axis.spines["top"].set_visible(False)
+    axis.spines["right"].set_visible(False)
+    axis.spines["left"].set_color("#B8C0C8")
+    axis.spines["bottom"].set_color("#B8C0C8")
+    axis.tick_params(colors="#4E5965")
+
+    figure.text(
+        0.115,
+        0.025,
+        (
+            f"Note: Entry year is the author's first observed publication in "
+            f"{scope_label}. Cohorts after {last_cohort} are excluded\n"
+            f"because a complete {window_years}-year follow-up is unavailable. "
+            f"Data cover {observation_start_year}-{observation_end_year}, so early "
+            "cohorts may include authors with earlier unobserved publications."
+        ),
+        color="#69727D",
+        fontsize=9,
+        ha="left",
+        va="bottom",
+    )
+    save_figure(
+        figure,
+        output_path,
+        tight_layout_rect=(0, 0.11, 1, 1),
     )
 
 

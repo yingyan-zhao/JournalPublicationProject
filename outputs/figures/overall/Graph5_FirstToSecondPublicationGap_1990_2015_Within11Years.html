@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Average time to a second publication in the Top Five, within 11 years</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #ffffff;
+      --foreground: #1e252b;
+      --muted-foreground: #68737e;
+      --grid: #dce1e6;
+      --axis: #aeb7c0;
+      --series: #087e73;
+      --tooltip-background: #1e252b;
+      --tooltip-foreground: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #171a1d;
+        --foreground: #f1f3f4;
+        --muted-foreground: #b2bac2;
+        --grid: #343a40;
+        --axis: #626c75;
+        --series: #46c6b8;
+        --tooltip-background: #f1f3f4;
+        --tooltip-foreground: #171a1d;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+    }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .chart {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted-foreground);
+      font-size: 15px;
+    }
+    .chart-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .grid-line {
+      stroke: var(--grid);
+      stroke-width: 1;
+    }
+    .axis-line {
+      stroke: var(--axis);
+      stroke-width: 1;
+    }
+    .axis-label,
+    .tick-label,
+    .annotation {
+      fill: var(--muted-foreground);
+      font-family: inherit;
+    }
+    .axis-label { font-size: 14px; }
+    .tick-label,
+    .annotation { font-size: 12px; }
+    .annotation,
+    .annotation-line { pointer-events: none; }
+    .annotation-line {
+      stroke: var(--muted-foreground);
+      stroke-width: 1;
+    }
+    .gap-line {
+      fill: none;
+      stroke: var(--series);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke-width 140ms ease;
+    }
+    .gap-line.is-active { stroke-width: 4; }
+    .ci-line {
+      fill: none;
+      stroke: var(--series);
+      stroke-width: 1.2;
+      opacity: 0.75;
+      pointer-events: none;
+      transition: stroke-width 140ms ease, opacity 140ms ease;
+    }
+    .ci-line.is-active {
+      stroke-width: 1.8;
+      opacity: 1;
+    }
+    .hit-line {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 20;
+      pointer-events: stroke;
+      cursor: crosshair;
+    }
+    .hover-marker {
+      display: none;
+      fill: var(--series);
+      stroke: var(--background);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+    .tooltip {
+      position: absolute;
+      z-index: 2;
+      transform: translate(-50%, calc(-100% - 10px));
+      max-width: 280px;
+      padding: 7px 9px;
+      border-radius: 4px;
+      background: var(--tooltip-background);
+      color: var(--tooltip-foreground);
+      font-size: 13px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .tooltip[hidden] { display: none; }
+    .note {
+      margin: 4px 0 0;
+      color: var(--muted-foreground);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    @media (max-width: 520px) {
+      .chart { padding: 16px 10px; }
+      h1 { font-size: 22px; }
+      .subtitle { font-size: 13px; }
+      .grid-line,
+      .axis-line,
+      .gap-line,
+      .ci-line,
+      .hit-line,
+      .hover-marker,
+      .annotation-line { vector-effect: non-scaling-stroke; }
+      .tick-label { font-size: 22px; }
+      .axis-label { font-size: 23px; }
+      .annotation,
+      .annotation-line { display: none; }
+      .tooltip { white-space: normal; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gap-line,
+      .ci-line { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main id="first-to-second-gap-chart" class="chart">
+    <h1>Average time to a second publication in the Top Five, within 11 years</h1>
+    <p class="subtitle">By year of authors&#x27; first publication in the Top Five, 1990-2015</p>
+    <svg class="chart-svg" viewBox="0 0 900 520" role="img" aria-labelledby="chart-title chart-description">
+      <title id="chart-title">Average years between first and second publications in the Top Five</title>
+      <desc id="chart-description">Hover over the line to inspect the first-publication year, conditional average gap to a second publication, 95% confidence interval, and number of authors.</desc>
+    </svg>
+    <div class="tooltip" role="status" aria-live="polite" hidden></div>
+    <p class="note"><strong>Note:</strong> Entry years are restricted to 1990&ndash;2015. Values are conditional on an observed second publication in the Top Five within 11 years of the first. Whiskers show 95% Student's t confidence intervals for the mean. Intervals outside the 3&ndash;5 plotting range are clipped; exact bounds appear in the tooltip and CSV.</p>
+  </main>
+  <script>
+    (() => {
+      const data = [[1990,3.946429,56,3.012545,4.880313],[1991,3.901408,71,3.105085,4.697732],[1992,4.178571,56,3.301294,5.055849],[1993,4.510204,49,3.525403,5.495005],[1994,3.983051,59,3.15684,4.809261],[1995,3.836735,49,2.978338,4.695132],[1996,3.92,50,3.141504,4.698496],[1997,3.880597,67,3.28839,4.472804],[1998,3.472727,55,2.794674,4.15078],[1999,4.026786,112,3.404783,4.648788],[2000,3.307692,104,2.754255,3.86113],[2001,3.619048,105,3.082722,4.155373],[2002,3.512397,121,3.04354,3.981254],[2003,3.729508,122,3.291652,4.167364],[2004,4.195122,123,3.648222,4.742022],[2005,3.5,100,2.946988,4.053012],[2006,3.935484,93,3.340598,4.53037],[2007,3.272727,99,2.730759,3.814695],[2008,3.825397,126,3.338269,4.312525],[2009,3.676471,136,3.227607,4.125334],[2010,3.503937,127,2.986083,4.021791],[2011,3.804054,148,3.310438,4.29767],[2012,3.722892,166,3.271548,4.174235],[2013,3.323529,136,2.847935,3.799124],[2014,3.925373,134,3.431021,4.419726],[2015,3.215686,153,2.813883,3.617489]];
+      const showAnnotation = true;
+      const root = document.getElementById("first-to-second-gap-chart");
+      const svg = root.querySelector(".chart-svg");
+      const tooltip = root.querySelector(".tooltip");
+      const ns = "http://www.w3.org/2000/svg";
+      const width = 900;
+      const height = 520;
+      const margin = { top: 18, right: 38, bottom: 62, left: 92 };
+      const fromYear = 1990;
+      const toYear = 2015;
+      const gapMin = 3;
+      const gapMax = 5;
+      const plotRight = width - margin.right;
+      const plotBottom = height - margin.bottom;
+      const x = year => margin.left + (year - fromYear) / (toYear - fromYear) * (plotRight - margin.left);
+      const y = value => plotBottom - (value - gapMin) / (gapMax - gapMin) * (plotBottom - margin.top);
+      const add = (name, attributes, text) => {
+        const node = document.createElementNS(ns, name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+        if (text !== undefined) node.textContent = text;
+        svg.appendChild(node);
+        return node;
+      };
+      const definitions = document.createElementNS(ns, "defs");
+      const clipPath = document.createElementNS(ns, "clipPath");
+      const clipRectangle = document.createElementNS(ns, "rect");
+      clipPath.setAttribute("id", "graph5-plot-clip");
+      clipRectangle.setAttribute("x", margin.left);
+      clipRectangle.setAttribute("y", margin.top);
+      clipRectangle.setAttribute("width", plotRight - margin.left);
+      clipRectangle.setAttribute("height", plotBottom - margin.top);
+      clipPath.appendChild(clipRectangle);
+      definitions.appendChild(clipPath);
+      svg.appendChild(definitions);
+
+      for (let value = gapMin; value <= gapMax; value += 0.5) {
+        const position = y(value);
+        add("line", { class: "grid-line", x1: margin.left, x2: plotRight, y1: position, y2: position });
+        const tickLabel = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
+        add("text", { class: "tick-label", x: margin.left - 12, y: position + 4, "text-anchor": "end" }, tickLabel);
+      }
+      [...new Set([fromYear, 1990, 2000, 2010, toYear])]
+        .filter(year => year >= fromYear && year <= toYear)
+        .sort((left, right) => left - right)
+        .forEach(year => {
+        add("text", { class: "tick-label", x: x(year), y: plotBottom + 25, "text-anchor": "middle" }, year);
+      });
+      add("line", { class: "axis-line", x1: margin.left, x2: margin.left, y1: margin.top, y2: plotBottom });
+      add("line", { class: "axis-line", x1: margin.left, x2: plotRight, y1: plotBottom, y2: plotBottom });
+      add("text", { class: "axis-label", x: (margin.left + plotRight) / 2, y: height - 12, "text-anchor": "middle" }, "Year of first publication in the Top Five");
+      add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Years between first and second publication in the Top Five");
+
+      const ciLines = data.map(([year, , , lower, upper]) => {
+        const pointX = x(year);
+        const lowerY = y(lower);
+        const upperY = y(upper);
+        const capWidth = 4;
+        const intervalPath = [
+          `M${pointX},${lowerY} L${pointX},${upperY}`,
+          `M${pointX - capWidth},${lowerY} L${pointX + capWidth},${lowerY}`,
+          `M${pointX - capWidth},${upperY} L${pointX + capWidth},${upperY}`
+        ].join(" ");
+        return add("path", {
+          class: "ci-line",
+          d: intervalPath,
+          "clip-path": "url(#graph5-plot-clip)"
+        });
+      });
+      const path = data.map(([year, gap], index) => `${index ? "L" : "M"}${x(year).toFixed(2)},${y(gap).toFixed(2)}`).join(" ");
+      const gapLine = add("path", { class: "gap-line", d: path, "clip-path": "url(#graph5-plot-clip)" });
+      if (showAnnotation) {
+        const firstPoint = data.find(point => point[0] === fromYear);
+        const lastPoint = data.find(point => point[0] === toYear);
+        if (firstPoint && lastPoint) {
+          const change = lastPoint[1] - firstPoint[1];
+          const sign = change < 0 ? "−" : "+";
+          const annotationTextYear = fromYear + (toYear - fromYear) * 0.63;
+          const annotationLineYear = fromYear + (toYear - fromYear) * 0.77;
+          add("line", { class: "annotation-line", x1: x(annotationLineYear), y1: y(4.55), x2: x(lastPoint[0]), y2: y(lastPoint[1]) });
+          add("text", { class: "annotation", x: x(annotationTextYear), y: y(4.85) }, `${sign}${Math.abs(change).toFixed(1)} years`);
+          add("text", { class: "annotation", x: x(annotationTextYear), y: y(4.68) }, `change from ${fromYear} to ${toYear}`);
+        }
+      }
+      const marker = add("circle", { class: "hover-marker", r: 5 });
+      const hitLine = add("path", { class: "hit-line", d: path, "clip-path": "url(#graph5-plot-clip)" });
+
+      const showTooltip = event => {
+        const svgRect = svg.getBoundingClientRect();
+        const svgX = (event.clientX - svgRect.left) / svgRect.width * width;
+        const nearest = data.reduce((best, point) => {
+          return Math.abs(x(point[0]) - svgX) < Math.abs(x(best[0]) - svgX) ? point : best;
+        });
+        marker.setAttribute("cx", x(nearest[0]));
+        marker.setAttribute("cy", y(nearest[1]));
+        marker.style.display = "block";
+        gapLine.classList.add("is-active");
+        ciLines.forEach(interval => interval.classList.add("is-active"));
+        tooltip.textContent = `${nearest[0]} · ${nearest[1].toFixed(2)} years · 95% CI ${nearest[3].toFixed(2)}-${nearest[4].toFixed(2)} · ${nearest[2].toLocaleString()} authors`;
+        tooltip.hidden = false;
+        const rootRect = root.getBoundingClientRect();
+        const markLeft = svgRect.left - rootRect.left + x(nearest[0]) / width * svgRect.width;
+        const markTop = svgRect.top - rootRect.top + y(nearest[1]) / height * svgRect.height;
+        tooltip.style.left = `${Math.max(135, Math.min(root.clientWidth - 135, markLeft))}px`;
+        tooltip.style.top = `${Math.max(32, markTop)}px`;
+      };
+      const hideTooltip = () => {
+        marker.style.display = "none";
+        gapLine.classList.remove("is-active");
+        ciLines.forEach(interval => interval.classList.remove("is-active"));
+        tooltip.hidden = true;
+      };
+      hitLine.addEventListener("pointerenter", showTooltip);
+      hitLine.addEventListener("pointermove", showTooltip);
+      hitLine.addEventListener("pointerleave", hideTooltip);
+    })();
+  </script>
+</body>
+</html>

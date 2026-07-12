@@ -72,6 +72,7 @@ PUBLICATION_GAP_PERIODS = {
     "1995-2000": (1995, 2000),
     "2010-2015": (2010, 2015),
 }
+PUBLICATION_GAP_FOLLOWUP_YEARS = 11
 ROLLING_WINDOW_YEARS = 20
 TOP_AUTHOR_PERCENTAGE = 10
 BASELINE_COLOR = "#A8AFB7"
@@ -82,6 +83,25 @@ EARLIER_CIRCLE_AREA = 68
 LATER_CIRCLE_AREA = EARLIER_CIRCLE_AREA * 3
 EARLIER_LEGEND_MARKER_SIZE = 7
 LATER_LEGEND_MARKER_SIZE = EARLIER_LEGEND_MARKER_SIZE * math.sqrt(3)
+
+
+#############################################################################
+# In 03_ExploreConcentrationAuthorByFields.py, Starting from “JEL_Training_Data_PaperAuthor_WithAuthorID_JEL_Merged_Top5.csv”, we are going to explore patterns by fields. We are going to only focus on top 10 fields [D, C, E, J, H, O, L, G, F, I]. A paper can be in different categories, if it has multiple jel codes.
+#
+# Step 1. I want a horizontal dumbbell chart. Each line is a field. One each line there are two circles. One for the share of papers include top-ranked (top 10% of authors) authors in 2020-2025, and the other for the share of papers include top-ranked (top 10% of authors) authors in 1995-2000. Make the circles teal. Make 1995-200 circle lighter and 2020-2025 circle darker and 3 times bigger. Add an arrow, which shows the direction of changes from 1995-2000 number to 2020-2025 number. Add the percentage difference above the arrow. Rank the line by letters of each field.
+#
+# Step 2. I want a horizontal dumbbell chart. Each line is a field. One each line there are two circles.  One for the share of New authors among the total number of unique author names in 1995-2000, and the other for 2020-2025. Make the circles teal. Make the circles teal. Make 1995-200 circle lighter and 2020-2025 circle darker and 3 times bigger. Add an arrow, which shows the direction of changes from 1995-2000 number to 2020-2025 number. Add the percentage difference above the arrow. Rank the line by letters of each field.
+#
+# Step 3. I want a horizontal dumbbell chart. Each field will have three lines. One line for the share of New authors publishing their first top-five with experienced coauthors, one line for the share of new authors publishing with new comers and the other line for the share of solo-authored papers. On each line there are two circles, one is the share during 1995-2000 and the other one is the share during 2020-2025. Draw an arrow from the circle  of 1995-2000 to the circle of 2010-2015. Use teal for the share of New authors publishing their first top-five with experienced coauthors, use orange for the share of new authors publishing with new comers  and use grey for the share of solo-authored papers. The circle for 1995-2000 is lighter and the circle for 2020-2025 is darker. Also make the circle for 2020-2025   3 times larger. Add the change in percentage points over each line. Rank the dumbbell by letters of each field.
+#
+#
+# Step 4. I want a horizontal dumbbell chart. Each line will be a field. The line measures the number of years.
+# On each line there are two circles. One is the average gap of years between the first and second top-five publication in 1995-2000,
+# the other is the average gap of years between the first and second top-five publication in  2010-2015.
+# Draw an arrow from the circle  of 1995-2000 to the circle of 2010-2015. Rank the line by letters of each field.
+# For each paper, we only look at the second paper that is published within 11 years after the first paper.
+# Add a 95 confidence interval for each point.
+#############################################################################
 
 
 def main() -> None:
@@ -516,10 +536,56 @@ def safe_share(numerator: int, denominator: int) -> float:
     return numerator / denominator if denominator else 0.0
 
 
+def summarize_gap_values(values: pd.Series) -> dict[str, float | int]:
+    from scipy.stats import t as student_t
+
+    gaps = pd.to_numeric(values, errors="coerce").dropna()
+    count = int(len(gaps))
+    if count == 0:
+        return {
+            "number_of_gap_observations": 0,
+            "average_gap_years": pd.NA,
+            "gap_standard_deviation": pd.NA,
+            "gap_standard_error": pd.NA,
+            "gap_ci_95_lower": pd.NA,
+            "gap_ci_95_upper": pd.NA,
+            "median_gap_years": pd.NA,
+            "share_same_year": pd.NA,
+        }
+
+    mean = float(gaps.mean())
+    median = float(gaps.median())
+    share_same_year = float(gaps.eq(0).mean())
+    if count == 1:
+        standard_deviation = pd.NA
+        standard_error = pd.NA
+        lower = pd.NA
+        upper = pd.NA
+    else:
+        standard_deviation = float(gaps.std(ddof=1))
+        standard_error = standard_deviation / math.sqrt(count)
+        critical_value = float(student_t.ppf(0.975, count - 1))
+        margin = critical_value * standard_error
+        lower = mean - margin
+        upper = mean + margin
+
+    return {
+        "number_of_gap_observations": count,
+        "average_gap_years": mean,
+        "gap_standard_deviation": standard_deviation,
+        "gap_standard_error": standard_error,
+        "gap_ci_95_lower": lower,
+        "gap_ci_95_upper": upper,
+        "median_gap_years": median,
+        "share_same_year": share_same_year,
+    }
+
+
 def calculate_first_to_second_gap_by_field(
     field_author_rows: pd.DataFrame,
 ) -> pd.DataFrame:
     rows = []
+    observation_end_year = int(field_author_rows["publication_year"].max())
     for field in FIELD_CODES:
         field_data = (
             field_author_rows.loc[field_author_rows["jel_field"].eq(field)]
@@ -548,21 +614,30 @@ def calculate_first_to_second_gap_by_field(
         )
 
         for period_label, (start_year, end_year) in PUBLICATION_GAP_PERIODS.items():
-            cohort_authors = first_publication_year.loc[
+            period_authors = first_publication_year.loc[
                 first_publication_year.between(
                     start_year,
                     end_year,
                     inclusive="both",
                 )
             ]
+            complete_followup = (
+                period_authors + PUBLICATION_GAP_FOLLOWUP_YEARS
+            ).le(observation_end_year)
+            cohort_authors = period_authors.loc[complete_followup]
             observed_second = second_publications.loc[
-                second_publications["first_publication_year"].between(
-                    start_year,
-                    end_year,
+                second_publications["author_id"].isin(cohort_authors.index)
+                & second_publications["gap_years"].between(
+                    0,
+                    PUBLICATION_GAP_FOLLOWUP_YEARS,
                     inclusive="both",
                 )
             ]
             gap_values = observed_second["gap_years"]
+            gap_statistics = summarize_gap_values(gap_values)
+            authors_with_second = int(
+                observed_second["author_id"].nunique()
+            )
             rows.append(
                 {
                     "jel_field": field,
@@ -570,25 +645,26 @@ def calculate_first_to_second_gap_by_field(
                     "entry_period": period_label,
                     "entry_period_start_year": start_year,
                     "entry_period_end_year": end_year,
-                    "total_entry_cohort_authors": int(len(cohort_authors)),
-                    "authors_with_observed_second_publication": int(
-                        observed_second["author_id"].nunique()
+                    "followup_window_years": (
+                        PUBLICATION_GAP_FOLLOWUP_YEARS
                     ),
-                    "share_with_observed_second_publication": safe_share(
-                        int(observed_second["author_id"].nunique()),
+                    "observation_end_year": observation_end_year,
+                    "complete_followup_window_required": 1,
+                    "entry_authors_before_followup_requirement": int(
+                        len(period_authors)
+                    ),
+                    "total_entry_cohort_authors": int(len(cohort_authors)),
+                    "authors_excluded_incomplete_followup": int(
+                        len(period_authors) - len(cohort_authors)
+                    ),
+                    "authors_with_second_publication_within_window": (
+                        authors_with_second
+                    ),
+                    "share_with_second_publication_within_window": safe_share(
+                        authors_with_second,
                         int(len(cohort_authors)),
                     ),
-                    "average_gap_years": (
-                        float(gap_values.mean()) if not gap_values.empty else pd.NA
-                    ),
-                    "median_gap_years": (
-                        float(gap_values.median()) if not gap_values.empty else pd.NA
-                    ),
-                    "share_same_year": (
-                        float(gap_values.eq(0).mean())
-                        if not gap_values.empty
-                        else pd.NA
-                    ),
+                    **gap_statistics,
                 }
             )
 
@@ -1313,12 +1389,26 @@ def plot_first_to_second_gap_by_field(
     )
     old_gap = pd.to_numeric(old_data["average_gap_years"], errors="coerce")
     later_gap = pd.to_numeric(later_data["average_gap_years"], errors="coerce")
+    old_ci_lower = pd.to_numeric(old_data["gap_ci_95_lower"], errors="coerce")
+    old_ci_upper = pd.to_numeric(old_data["gap_ci_95_upper"], errors="coerce")
+    later_ci_lower = pd.to_numeric(
+        later_data["gap_ci_95_lower"],
+        errors="coerce",
+    )
+    later_ci_upper = pd.to_numeric(
+        later_data["gap_ci_95_upper"],
+        errors="coerce",
+    )
     y_positions = list(range(len(field_order)))
 
     figure, axis = plt.subplots(figsize=(12, 7.8))
     for y_position, field in zip(y_positions, field_order):
         old_value = float(old_gap.loc[field])
         later_value = float(later_gap.loc[field])
+        old_lower = float(old_ci_lower.loc[field])
+        old_upper = float(old_ci_upper.loc[field])
+        later_lower = float(later_ci_lower.loc[field])
+        later_upper = float(later_ci_upper.loc[field])
         if not math.isclose(old_value, later_value, abs_tol=0.01):
             axis.annotate(
                 "",
@@ -1334,6 +1424,28 @@ def plot_first_to_second_gap_by_field(
                 },
                 zorder=2,
             )
+        axis.errorbar(
+            old_value,
+            y_position,
+            xerr=[[old_value - old_lower], [old_upper - old_value]],
+            fmt="none",
+            ecolor=BASELINE_COLOR,
+            elinewidth=1.2,
+            capsize=3,
+            capthick=1.2,
+            zorder=3,
+        )
+        axis.errorbar(
+            later_value,
+            y_position,
+            xerr=[[later_value - later_lower], [later_upper - later_value]],
+            fmt="none",
+            ecolor=CHANGE_COLOR,
+            elinewidth=1.2,
+            capsize=3,
+            capthick=1.2,
+            zorder=3,
+        )
         axis.scatter(
             old_value,
             y_position,
@@ -1364,11 +1476,11 @@ def plot_first_to_second_gap_by_field(
     ]
     axis.set_yticks(y_positions, labels=field_labels)
     axis.invert_yaxis()
-    maximum_gap = float(pd.concat([old_gap, later_gap]).max())
+    maximum_gap = float(pd.concat([old_ci_upper, later_ci_upper]).max())
     axis.set_xlim(0, math.ceil(maximum_gap + 1.0))
     axis.set_xlabel("Average years from first to second publication in the field")
     axis.set_title(
-        "Observed gaps to a second publication narrowed across fields",
+        "Time to a second publication varies across fields",
         loc="left",
         pad=38,
         fontsize=17,
@@ -1378,7 +1490,7 @@ def plot_first_to_second_gap_by_field(
         0,
         1.015,
         (
-            "Mean gap among authors with an observed second publication, "
+            "Mean gap conditional on a second publication within 11 years, "
             "by field-entry period"
         ),
         transform=axis.transAxes,
@@ -1428,10 +1540,10 @@ def plot_first_to_second_gap_by_field(
         0.012,
         (
             "Note: Entry periods are defined by an author's first observed "
-            "Top Five publication in the field. Means include only authors "
-            "with an observed second publication in that field. The "
-            "2010-2015 cohort has shorter follow-up than the 1995-2000 "
-            "cohort, so right-censoring remains relevant."
+            "Top Five publication in the field. Every author has a complete "
+            "11-year follow-up window. Means include only authors whose second "
+            "publication in that field occurs within 11 years. Whiskers show "
+            "95% Student's t confidence intervals for the mean."
         ),
         ha="left",
         va="bottom",

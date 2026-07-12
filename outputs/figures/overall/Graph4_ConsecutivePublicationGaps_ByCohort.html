@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Observed publication gaps are shorter for newer cohorts</title>
+  <title>Publication gaps within the first 11 years vary across entry cohorts</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -12,7 +12,6 @@
       --muted-foreground: #68737e;
       --grid: #dce1e6;
       --axis: #aeb7c0;
-      --cohort-1980s: #e67e22;
       --cohort-1990s: #a8afb7;
       --cohort-2000s: #68737e;
       --cohort-2010s: #087e73;
@@ -26,7 +25,6 @@
         --muted-foreground: #b2bac2;
         --grid: #343a40;
         --axis: #626c75;
-        --cohort-1980s: #f3a35c;
         --cohort-1990s: #89939d;
         --cohort-2000s: #aeb7c0;
         --cohort-2010s: #46c6b8;
@@ -129,10 +127,23 @@
       opacity: 0.32;
       transition: opacity 160ms ease, stroke-width 160ms ease;
     }
-    .series-line[data-series="1981-1990"] { stroke: var(--cohort-1980s); }
-    .series-line[data-series="1991-2000"] { stroke: var(--cohort-1990s); }
-    .series-line[data-series="2001-2010"] { stroke: var(--cohort-2000s); }
-    .series-line[data-series="2011-2020"] { stroke: var(--cohort-2010s); }
+    .series-line[data-series="1991-1995"] { stroke: var(--cohort-1990s); }
+    .series-line[data-series="2001-2005"] { stroke: var(--cohort-2000s); }
+    .series-line[data-series="2011-2015"] { stroke: var(--cohort-2010s); }
+    .ci-line {
+      fill: none;
+      stroke-width: 1.2;
+      opacity: 0.32;
+      pointer-events: none;
+      transition: opacity 160ms ease, stroke-width 160ms ease;
+    }
+    .ci-line[data-series="1991-1995"] { stroke: var(--cohort-1990s); }
+    .ci-line[data-series="2001-2005"] { stroke: var(--cohort-2000s); }
+    .ci-line[data-series="2011-2015"] { stroke: var(--cohort-2010s); }
+    .ci-line.is-active {
+      stroke-width: 1.8;
+      opacity: 1;
+    }
     .series-line.is-active {
       stroke-width: 4;
       opacity: 1;
@@ -162,10 +173,9 @@
       pointer-events: none;
       transition: opacity 160ms ease, stroke-width 160ms ease;
     }
-    .point-marker[data-series="1981-1990"] { fill: var(--cohort-1980s); }
-    .point-marker[data-series="1991-2000"] { fill: var(--cohort-1990s); }
-    .point-marker[data-series="2001-2010"] { fill: var(--cohort-2000s); }
-    .point-marker[data-series="2011-2020"] { fill: var(--cohort-2010s); }
+    .point-marker[data-series="1991-1995"] { fill: var(--cohort-1990s); }
+    .point-marker[data-series="2001-2005"] { fill: var(--cohort-2000s); }
+    .point-marker[data-series="2011-2015"] { fill: var(--cohort-2010s); }
     .point-marker.is-active {
       stroke-width: 2;
       opacity: 1;
@@ -208,6 +218,7 @@
       .grid-line,
       .axis-line,
       .series-line,
+      .ci-line,
       .point-marker,
       .hit-line,
       .annotation-line { vector-effect: non-scaling-stroke; }
@@ -225,24 +236,23 @@
 </head>
 <body>
   <main id="publication-gap-chart" class="chart">
-    <h1>Observed publication gaps are shorter for newer cohorts</h1>
-    <p class="subtitle">Average years between consecutive publications in the Top Five, by cohort of first publication in the Top Five</p>
+    <h1>Publication gaps within the first 11 years vary across entry cohorts</h1>
+    <p class="subtitle">Average years between consecutive publications in the Top Five, during the first 11 years after entry</p>
     <div class="legend" aria-label="Choose the emphasized first-publication cohort">
-      <button type="button" data-series="1981-1990" aria-pressed="false"><span class="swatch circle" style="--swatch: var(--cohort-1980s)"></span>1981-1990</button>
-      <button type="button" data-series="1991-2000" aria-pressed="false"><span class="swatch square" style="--swatch: var(--cohort-1990s)"></span>1991-2000</button>
-      <button type="button" data-series="2001-2010" aria-pressed="false"><span class="swatch diamond" style="--swatch: var(--cohort-2000s)"></span>2001-2010</button>
-      <button type="button" data-series="2011-2020" aria-pressed="true"><span class="swatch triangle" style="--swatch: var(--cohort-2010s)"></span>2011-2020</button>
+      <button type="button" data-series="1991-1995" aria-pressed="false"><span class="swatch square" style="--swatch: var(--cohort-1990s)"></span>1991-1995</button>
+      <button type="button" data-series="2001-2005" aria-pressed="false"><span class="swatch diamond" style="--swatch: var(--cohort-2000s)"></span>2001-2005</button>
+      <button type="button" data-series="2011-2015" aria-pressed="true"><span class="swatch triangle" style="--swatch: var(--cohort-2010s)"></span>2011-2015</button>
     </div>
     <svg class="chart-svg" viewBox="0 0 980 560" role="img" aria-labelledby="chart-title chart-description">
       <title id="chart-title">Average publication gaps by first-publication cohort</title>
-      <desc id="chart-description">Hover over a cohort line to inspect the publication transition, average gap, and number of authors.</desc>
+      <desc id="chart-description">Hover over a cohort line to inspect the publication transition, average gap, 95% confidence interval, and number of authors.</desc>
     </svg>
     <div class="tooltip" role="status" aria-live="polite" hidden></div>
-    <p class="note"><strong>Note:</strong> Values show mean years between consecutive publications in the Top Five. Cohorts are defined by the year of first publication in the Top Five. Later publication numbers include only authors who reach that stage.</p>
+    <p class="note"><strong>Note:</strong> Every author has a complete 11-year follow-up window. Only publications within 11 years of the first publication in the Top Five are included. Later publication numbers include only authors who reach that stage within the window. Whiskers show 95% Student's t confidence intervals for the mean.</p>
   </main>
   <script>
     (() => {
-      const series = {"1981-1990":[[2,5.88685,654],[3,4.787879,429],[4,3.969325,326],[5,3.833948,271],[6,3.197368,228],[7,3.644444,180],[8,3.092105,152],[9,2.856115,139],[10,2.316667,120]],"1991-2000":[[2,5.574194,775],[3,4.089789,568],[4,3.290398,427],[5,3.017341,346],[6,2.568345,278],[7,2.809524,231],[8,2.502564,195],[9,2.29697,165],[10,2.345324,139]],"2001-2010":[[2,4.579664,1249],[3,3.334951,824],[4,2.934534,611],[5,2.429461,482],[6,2.339674,368],[7,2.080139,287],[8,1.771784,241],[9,1.77,200],[10,1.649351,154]],"2011-2020":[[2,3.500352,1419],[3,2.623501,834],[4,2.14881,504],[5,1.745981,311],[6,1.656863,204],[7,1.320611,131],[8,1.494505,91],[9,1.178571,56],[10,1.105263,38]]};
+      const series = {"1991-1995":[[2,4.066901,284,3.688278,4.445525],[3,2.786517,178,2.439908,3.133125],[4,2.042735,117,1.697318,2.388152],[5,1.662162,74,1.287846,2.036478],[6,1.173077,52,0.862566,1.483588],[7,1.333333,39,0.897577,1.76909]],"2001-2005":[[2,3.723292,571,3.497839,3.948746],[3,2.432353,340,2.202679,2.662027],[4,2.022026,227,1.789089,2.254964],[5,1.605096,157,1.382325,1.827866],[6,1.675926,108,1.37877,1.973082],[7,1.253731,67,0.994257,1.513206],[8,1.102041,49,0.753962,1.45012],[9,0.925,40,0.574753,1.275247]],"2011-2015":[[2,3.597015,737,3.390862,3.803167],[3,2.688453,459,2.489788,2.887118],[4,2.135417,288,1.924658,2.346176],[5,1.666667,177,1.44155,1.891783],[6,1.469565,115,1.239617,1.699514],[7,1.304878,82,1.006492,1.603264],[8,1.092593,54,0.810684,1.374501],[9,1.289474,38,0.940045,1.638902]]};
       const showAnnotation = true;
       const transitionLabels = {
         2: "1st to 2nd publication",
@@ -268,7 +278,7 @@
       const height = 560;
       const margin = { top: 24, right: 34, bottom: 76, left: 92 };
       const keys = Object.keys(series);
-      const defaultSeries = keys.includes("2011-2020") ? "2011-2020" : keys[keys.length - 1];
+      const defaultSeries = keys.includes("2011-2015") ? "2011-2015" : keys[keys.length - 1];
       const points = Object.values(series).flat();
       const observedMax = Math.max(...points.map(point => point[1]));
       const tickMax = Math.max(1, Math.ceil(observedMax));
@@ -299,8 +309,26 @@
       add("text", { class: "axis-label", x: 22, y: (margin.top + plotBottom) / 2, "text-anchor": "middle", transform: `rotate(-90 22 ${(margin.top + plotBottom) / 2})` }, "Average gap from previous publication (years)");
 
       const lineNodes = {};
+      const ciNodes = {};
       const pointNodes = {};
       const hitNodes = {};
+      const addConfidenceInterval = (key, point) => {
+        const [publicationNumber, , , lower, upper] = point;
+        const pointX = x(publicationNumber);
+        const lowerY = y(lower);
+        const upperY = y(upper);
+        const capWidth = 4;
+        const path = [
+          `M${pointX},${lowerY} L${pointX},${upperY}`,
+          `M${pointX - capWidth},${lowerY} L${pointX + capWidth},${lowerY}`,
+          `M${pointX - capWidth},${upperY} L${pointX + capWidth},${upperY}`
+        ].join(" ");
+        return add("path", {
+          class: `ci-line${key === defaultSeries ? " is-active" : ""}`,
+          "data-series": key,
+          d: path
+        });
+      };
       const addPointMarker = (key, publicationNumber, gap) => {
         const pointX = x(publicationNumber);
         const pointY = y(gap);
@@ -309,19 +337,17 @@
           "data-series": key,
           "data-publication-number": publicationNumber
         };
-        if (key === "1981-1990") {
-          return add("circle", { ...common, cx: pointX, cy: pointY, r: 4.4 });
-        }
-        if (key === "1991-2000") {
+        if (key === "1991-1995") {
           return add("rect", { ...common, x: pointX - 4.2, y: pointY - 4.2, width: 8.4, height: 8.4 });
         }
-        if (key === "2001-2010") {
+        if (key === "2001-2005") {
           return add("rect", { ...common, x: pointX - 3.8, y: pointY - 3.8, width: 7.6, height: 7.6, transform: `rotate(45 ${pointX} ${pointY})` });
         }
         return add("polygon", { ...common, points: `${pointX},${pointY - 5.2} ${pointX + 5.0},${pointY + 4.1} ${pointX - 5.0},${pointY + 4.1}` });
       };
       keys.forEach(key => {
         const path = series[key].map(([publicationNumber, gap], index) => `${index ? "L" : "M"}${x(publicationNumber).toFixed(2)},${y(gap).toFixed(2)}`).join(" ");
+        ciNodes[key] = series[key].map(point => addConfidenceInterval(key, point));
         lineNodes[key] = add("path", { class: `series-line${key === defaultSeries ? " is-active" : ""}`, "data-series": key, d: path });
         pointNodes[key] = series[key].map(([publicationNumber, gap]) => addPointMarker(key, publicationNumber, gap));
         hitNodes[key] = add("path", { class: "hit-line", "data-series": key, d: path });
@@ -332,14 +358,14 @@
         button.setAttribute("aria-pressed", button.dataset.series === defaultSeries ? "true" : "false");
       });
 
-      if (showAnnotation && series["1981-1990"] && series["2011-2020"]) {
-        const oldest = series["1981-1990"].find(point => point[0] === 2);
-        const newest = series["2011-2020"].find(point => point[0] === 2);
+      if (showAnnotation && series["1991-1995"] && series["2011-2015"]) {
+        const oldest = series["1991-1995"].find(point => point[0] === 2);
+        const newest = series["2011-2015"].find(point => point[0] === 2);
         if (oldest && newest) {
           const annotationGap = Math.min(yMax - 0.15, Math.max(oldest[1], newest[1]) + 1.0);
           add("line", { class: "annotation-line", x1: x(3.45), y1: y(annotationGap - 0.15), x2: x(newest[0]), y2: y(newest[1]) });
-          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap) }, "The observed gap from the 1st to 2nd publication declined");
-          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap - 0.32) }, `from about ${oldest[1].toFixed(1)} to ${newest[1].toFixed(1)} years`);
+          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap) }, `The 1st-to-2nd gap was ${oldest[1].toFixed(1)} years for 1991-1995`);
+          add("text", { class: "annotation", x: x(3.55), y: y(annotationGap - 0.32) }, `and ${newest[1].toFixed(1)} years for 2011-2015`);
         }
       }
 
@@ -347,6 +373,9 @@
       const activate = key => {
         keys.forEach(seriesKey => {
           lineNodes[seriesKey].classList.toggle("is-active", seriesKey === key);
+          ciNodes[seriesKey].forEach(interval => {
+            interval.classList.toggle("is-active", seriesKey === key);
+          });
           pointNodes[seriesKey].forEach(point => {
             point.classList.toggle("is-active", seriesKey === key);
           });
@@ -372,7 +401,7 @@
         pointNodes[key].forEach((point, index) => {
           point.classList.toggle("is-hover", index === nearestIndex);
         });
-        tooltip.textContent = `${key} cohort - ${transitionLabels[nearest[0]]}: ${nearest[1].toFixed(2)} years (${nearest[2].toLocaleString()} authors)`;
+        tooltip.textContent = `${key} cohort - ${transitionLabels[nearest[0]]}: ${nearest[1].toFixed(2)} years (95% CI ${nearest[3].toFixed(2)}-${nearest[4].toFixed(2)}; ${nearest[2].toLocaleString()} authors)`;
         tooltip.hidden = false;
         const rootRect = root.getBoundingClientRect();
         const markLeft = svgRect.left - rootRect.left + x(nearest[0]) / width * svgRect.width;

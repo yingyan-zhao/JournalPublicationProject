@@ -7,7 +7,7 @@ To classify papers with missing JEL fields, I developed and compared multi-label
 
 ## Overview
 
-How have pathways into economics’ leading journals changed over time? This project examines the evolution of authorship in the journals commonly known as the “Top Five,” with particular attention to researchers publishing in these journals for the first time.[^1] I document three broad shifts. (1) Authorship has become increasingly concentrated around scholars with strong prior Top Five publication records. (2) First-time authors are increasingly likely to publish with coauthors who already have Top Five experience. (3) Among authors who publish in the Top Five more than once, the observed time between successive publications has generally shortened, particularly for more recent cohorts.
+How have pathways into economics’ leading journals changed over time? This project examines the evolution of authorship in the journals commonly known as the “Top Five,” with particular attention to researchers publishing in these journals for the first time.[^1] I document three broad shifts. (1) Authorship has become increasingly concentrated around scholars with strong prior Top Five publication records. (2) First-time authors account for a smaller share of authors. (3) First-time authors are increasingly likely to publish with coauthors who already have Top Five experience.
 
 A Top Five publication is widely viewed as an important marker of research success in economics. Publication outcomes are likely to reflect genuine differences in research quality, ability, experience, persistence, and access to productive collaborators and feedback. Established scholars may produce stronger work because they have accumulated knowledge, learned how to identify promising questions, and developed more effective research processes.
 
@@ -130,36 +130,6 @@ A first-time Top Five author is also not necessarily a junior researcher and may
 
 [^2]: This comparison remains sensitive to team size. As the number of coauthors increases, the probability that at least one team member has prior Top Five experience also rises mechanically. Distinguishing this mechanical effect from a deeper change in the role of experience would require comparing teams of similar sizes or estimating how much of the trend can be explained by changes in coauthorship alone.
 
-### Finding 4: Observed gaps between Top Five publications have shortened
-
-Figure 4 groups authors by the decade of their first Top Five publication and compares the average number of years between consecutive publications. It shows both how publication gaps change as authors accumulate more Top Five papers and how those gaps differ across entry cohorts.
-
-Two patterns stand out. First, within most cohorts, the observed gap tends to become shorter at later publication stages. The interval from the first to the second publication is generally longer than the intervals between later publications. This may reflect learning, established research collaborations, several projects moving through the publication process simultaneously, or the visibility and resources associated with an existing publication record. This pattern also reflects selection. Authors who reach their fifth, sixth, or later Top Five publication are an unusually persistent and productive group. The shorter gaps at later stages therefore do not describe the career trajectory of a typical author. Instead, each successive transition represents a more selected group of repeat publishers.
-
-Second, the same publication transition is generally shorter for newer cohorts. Among authors with an observed second publication, the average gap from the first to the second Top Five paper was 5.9 years for the 1981–1990 entry cohort, 5.6 years for the 1991–2000 cohort, 4.6 years for the 2001–2010 cohort, and 3.5 years for the 2011–2020 cohort. Similar differences appear at several later publication stages. 
-
-These cohort differences could reflect changes in research production, team size, coauthorship, specialization, or the publication process. They are also consistent with prior Top Five success providing greater momentum through accumulated experience, productive collaborations, visibility, or reputational advantages. The figure cannot distinguish among these explanations.
-
-<figure>
-  <img src="outputs/figures/overall/Graph4_ConsecutivePublicationGaps_ByCohort.png" width="800">
-  <figcaption>Figure 4. Average observed years between consecutive Top Five publications, grouped by the decade of an author’s first Top Five publication. Each transition includes only authors who reach the subsequent publication within the observation period.</figcaption>
-</figure>
-
-Figure 5 examines the cohort pattern more closely by focusing only on the transition from an author’s first to second Top Five publication. Instead of combining authors into ten-year groups, it reports the average observed gap separately for each year of entry.
-
-Among authors with an observed second publication, the average gap declined from 5.5 years for those entering in 1980 to 2.5 years for those entering in 2020. Although the annual series fluctuates, its broader direction is downward. Recent entrants who publish a second Top Five paper are therefore observed returning more quickly than comparable repeat publishers from earlier entry years.
-
-This pattern may indicate that a first Top Five publication is increasingly followed by additional publication momentum. That momentum could arise through learning, visibility, access to collaborators and feedback, multiple projects already in progress, or reputational advantages. 
-
-Incomplete follow-up is particularly important for interpreting both figures. Recent entrants have had less time to publish again, so authors who return quickly are disproportionately represented. Authors with longer gaps may not yet have an observed second publication, while authors who never publish again are excluded entirely. These features can make the average gaps for recent cohorts appear artificially short.
-
-The narrow conclusion is that, among authors whose subsequent Top Five publications are observed within the sample period, repeat publications occur sooner for more recent entrants. The figures do not establish that the expected time to a subsequent publication has declined for all authors entering the Top Five.
-
-<figure>
-  <img src="outputs/figures/overall/Graph5_FirstToSecondPublicationGap_1980_2020.png" width="800">
-  <figcaption> Figure 5. Average observed years between authors’ first and second Top Five publications, shown separately by year of first publication. Only authors with an observed second publication are included.</figcaption>
-</figure>
-
 ## Differences Across Fields
 
 The aggregate findings may conceal important differences across areas of economics. I therefore repeat four comparisons for the ten broad JEL fields with the largest numbers of Top Five papers: C, D, E, F, G, H, I, J, L, and O, which are the top 10 fields with largest publications in top five journals. Field assignments use observed JEL codes when available and model-generated classifications otherwise. Because a paper may have several broad JEL codes, it contributes to every applicable field. Field counts consequently overlap and should not be added together.
@@ -203,22 +173,6 @@ Solo entry became less common in every field. In 1995–2000, the solo-authored 
   <figcaption> Figure 8. Coauthor composition during new authors’ first observed publication year in each field. The mutually exclusive categories are entry with an experienced coauthor, entry only with other field newcomers, and solo-authored entry. Arrows show percentage-point changes from 1995–2000 to 2020–2025.</figcaption>
 </figure>
 
-### Field Finding 4: Observed gaps to a second publication shortened in every field
-
-Among authors with an observed second publication in the same field, the average gap from the first to the second publication was shorter for the 2010–2015 entry cohort than for the 1995–2000 cohort in all ten fields. For the earlier cohort, the average gaps ranged from 5.2 years in international economics to 8.0 years in industrial organization. For the later cohort, they ranged from 3.6 years in health, education, and welfare to 4.9 years in financial economics.
-
-The largest decline occurred in industrial organization, where the observed average fell from 8.0 to 4.4 years. Quantitative methods declined from 7.3 to 4.5 years, while health, education, and welfare declined from 6.3 to 3.6 years. International economics changed the least, moving from 5.2 to 4.7 years.
-
-The consistency across fields is notable, but the limitations affecting the overall comparison remain. The calculation includes only authors with an observed second publication in the same field, and more recent entrants have a shorter period in which that publication can be observed.
-
-To reduce this incomplete-follow-up problem, I use 2010–2015 as the latest entry cohort rather than a more recent period. Because the data extend through 2026, even authors entering in 2015 have at least 11 years of follow-up. This substantially increases the opportunity to observe a second publication, but it does not eliminate the concern. Authors with unusually long publication gaps may still be missing, while authors who never publish a second paper are excluded by construction. The reported gaps should therefore be interpreted as outcomes among observed repeat publishers rather than as the expected time to a second publication for all entrants.
-
-<figure>
-  <img src="outputs/figures/by_field/Graph4_FieldFirstToSecondPublicationGap_1995_2000_vs_2010_2015.png" width="800">
-  <figcaption> Figure 9. Average observed years from an author’s first to second Top Five publication in the same field, comparing the 1995–2000 and 2010–2015 field-entry cohorts. Only authors with an observed second publication in that field are included.</figcaption>
-</figure>
-
-Taken together, the field comparisons show that the aggregate changes are broadly distributed across economics rather than being driven by one specialty. Concentration increased in every field, new-author shares declined in most fields, entry increasingly involved field-experienced coauthors, and observed publication gaps shortened across all ten areas. The quantitative-methods field provides the clearest exception to parts of this general pattern, underscoring that the magnitude and form of these changes differ across areas.
 
 ## Interpretation and Limitations
 
