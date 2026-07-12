@@ -84,8 +84,8 @@ Several mechanisms could produce this pattern. Larger research teams mechanicall
 
 <figure>
   <img src="outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png" width="1000">
+  <figcaption>Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually.</figcaption>
 </figure>
-** Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually. **
 
 ### Finding 2: First-time authors account for a smaller share of authors
 
