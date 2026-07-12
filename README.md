@@ -83,7 +83,7 @@ It is not surprising that experienced and highly productive authors publish more
 Several mechanisms could produce this pattern. Larger research teams mechanically increase the likelihood that a paper includes at least one highly ranked author. Greater specialization may encourage collaboration among researchers with complementary skills, while experienced scholars may increasingly coauthor with newer researchers. Prior publication success may also bring accumulated experience, access to productive collaborators, greater visibility, and reputational advantages that support continued Top Five publication. These interpretations should be treated cautiously: the analysis is purely descriptive, and publication records alone cannot distinguish among these possible explanations.
 
 <figure>
-  <img src="outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png" width="1000">
+  <img src="outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png" width="800">
   <figcaption>Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually.</figcaption>
 </figure>
 
@@ -99,8 +99,10 @@ The decline in the new-author share complements Figure 1: both indicate that aut
 
 These findings do not establish that opportunities for first-time authors have declined. A “new author” is new only to the Top Five and may already have substantial experience publishing elsewhere. Moreover, the data contain published papers rather than submissions and rejections. The conclusion is that growth in repeat participation has outpaced growth in first-time participation.
 
-[![Annual share of authors who are new\]\(outputs/figures/overall/Graph2_1_NewAuthorCountShare_1980_2025.png)](outputs/figures/overall/Graph2_1_NewAuthorShare_1980_2025.html)
-*Figure 2. Share of distinct authors in each year whose first observed Top Five publication occurs in that year. Authors are counted once within each year, and the observation window begins in 1950.*
+<figure>
+  <img src="outputs/figures/overall/Graph2_1_NewAuthorCountShare_1980_2025.png" width="800">
+  <figcaption>Figure 2. Share of distinct authors in each year whose first observed Top Five publication occurs in that year. Authors are counted once within each year, and the observation window begins in 1950.</figcaption>
+</figure>
 
 ### Finding 3: New authors increasingly publish with experienced coauthors
 
@@ -110,10 +112,10 @@ The other two paths became less common. The share entering through solo-authored
 
 Experienced coauthors may contribute knowledge, feedback, complementary skills, or familiarity with producing research for leading journals. Coauthorship with established ones undoubtedly provides a large advantage, especially for junior researchers. This advantage becomes more and more dominant in recent years, while researches from less established authors without connection to established coauthors become harder and harder to break into the elite publication.
 
-
-[![Coauthor composition of new authors' first publications](outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.png)](outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.html)
-
-*Figure 3. Coauthor composition during each new author's first observed year in the Top Five. The categories are mutually exclusive: at least one experienced coauthor, only new coauthors, or solo-authored.*
+<figure>
+  <img src="outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.png" width="800">
+  <figcaption>Figure 3. Coauthor composition during each new author's first observed year in the Top Five. The categories are mutually exclusive: at least one experienced coauthor, only new coauthors, or solo-authored.</figcaption>
+</figure>
 
 ### Finding 4: Observed publication gaps are shorter for newer cohorts
 
