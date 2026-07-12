@@ -16,7 +16,7 @@ The analysis is descriptive. The data capture published papers, authorship histo
 
 ### Technical Stack
 
-- **Data collection:** Python, Requests, Beautiful Soup, OpenAlex API, and Crossref API
+- **Data collection:** Python, Requests, Beautiful Soup, OpenAlex API, and Crossref API, Combine multisource paper-level dataset
 - **Data processing and record linkage:** pandas, NumPy, DOI normalization, exact matching, and fuzzy name matching
 - **Machine learning:** scikit-learn, TF-IDF, logistic regression, PyTorch, Hugging Face Transformers, SPECTER2, and SciBERT
 - **Visualization:** Matplotlib and custom interactive HTML/CSS/JavaScript charts
@@ -25,7 +25,7 @@ The analysis is descriptive. The data capture published papers, authorship histo
 
 ### Data Sources
 
-I construct a paper-level dataset covering Top Five publications from 1950 through 2026. Core bibliographic records come from the OpenAlex and Crossref APIs. I enrich these records with metadata from RePEc, AEA journal pages, and NBER, and use targeted web scraping when abstracts, keywords, author information, or JEL codes are unavailable from structured sources.
+I construct a multisource paper-level dataset covering Top Five publications from 1950 through 2026. Core bibliographic records come from the OpenAlex and Crossref APIs. I enrich these records with metadata from RePEc, AEA journal pages, and NBER, and use targeted web scraping when abstracts, keywords, author information, or JEL codes are unavailable from structured sources.
 
 ### Record Linkage and Deduplication
 
@@ -37,15 +37,16 @@ To construct author-level publication histories, I normalize names across source
 
 ### Classification of Missing JEL Codes
 
-Approximately 72% of papers in the current Top Five analytic sample do not have an observed broad JEL category. I treat JEL assignment as a multi-label text-classification problem because a paper may belong to several fields.
+Approximately 72% of papers in the current Top Five analytic sample lack an observed broad JEL classification. Because a paper may be assigned to several JEL fields, I formulate the task as a multi-label text-classification problem rather than requiring each paper to belong to a single field.
 
-I compare three approaches using article titles, abstracts, and keywords:
+Using article titles, abstracts, and keywords, I estimate three base models:
+- TF-IDF features with one-vs-rest logistic regression;
+- SPECTER2 document embeddings with one-vs-rest logistic regression; and
+- a fine-tuned SciBERT classifier.
 
-1. TF-IDF features with one-vs-rest logistic regression;
-2. SPECTER2 embeddings with one-vs-rest logistic regression; and
-3. A fine-tuned SciBERT classifier.
+I then combine their predicted probabilities in a weighted ensemble. Model performance is evaluated on papers with observed JEL codes using micro and macro F1, precision, recall, Hamming loss, and exact-match subset accuracy. The selected model achieves a micro-averaged precision of 95%, a micro F1 score of 94%, and a macro F1 score of 95%.
 
-I also evaluate a weighted ensemble of the three models. Model performance is assessed on papers with observed JEL codes using micro and macro F1, precision, recall, Hamming loss, and subset accuracy. Observed and predicted codes remain separately identified. The current field analysis uses an observed JEL code when available and a SciBERT prediction otherwise.
+Observed and predicted classifications remain separately identified in the data. For the field-level analysis, I use observed JEL codes whenever they are available and model-generated classifications only when the observed codes are missing.
 
 ### Current Analytic Sample
 
@@ -72,14 +73,12 @@ How have entry, persistence, and the concentration of authorship in economics' T
 ## Preliminary Main Findings
 
 ### Finding 1: Top-ranked authors appear on a growing share of papers
-
-The share of papers with at least one author ranked in the preceding 20-year top 10% increased from **27.8% in 1980 to 46.4% in 2025**. The corresponding share increased from **3.4% to 12.9%** for the top 1% and from **18.4% to 29.7%** for the top 5%. By this measure, authorship has become more concentrated around scholars with strong recent Top Five publication records than in the past.
-
-This could reflect greater persistence among productive researchers, increasing coauthorship, larger research teams, or more collaboration between experienced and newer authors. The figure does not reveal why the pattern changed, and it does not show that editors favor established authors or that experienced authors have displaced newcomers.
-
-[![Share of papers with a top-ranked author](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.html)
-
-*Figure 1. Share of papers with at least one top-ranked author. Rankings are based on publication counts during the preceding 20 years.*
+Figure 1 asks how frequently a Top Five paper includes at least one author with a strong recent publication record. Author rankings are recalculated each year using publication counts during the preceding 20 years. The share of papers with at least one top-10% author increased from 27.8% in 1980 to 46.4% in 2025. The corresponding share rose from 18.4% to 29.7% for the top 5% and from 3.4% to 12.9% for the top 1%.
+By 2025, nearly half of Top Five papers therefore included an author ranked in the preceding 20-year top 10%. Because the increase appears at all three thresholds, the change is not confined to a small group at the very top of the publication distribution. Authors with strong recent Top Five records have become more prevalent across published papers.
+This pattern is consistent with greater persistence among productive researchers, but it can have several explanations. Experienced authors may have accumulated knowledge, developed more effective research processes, or become involved in several projects simultaneously. Increasing coauthorship and larger research teams also raise the probability that a paper includes at least one highly ranked author. Collaboration between experienced and newer researchers may further contribute to the trend.
+The figure measures the presence of top-ranked authors on papers, not their share of all authorship positions or their individual contribution to each paper. It also does not identify why concentration increased. In particular, it provides no direct evidence that editors favor established authors or that experienced authors have displaced newcomers. The more limited conclusion is that prior Top Five publication success has become more closely associated with continued presence in these journals.
+[![Share of papers with a top-ranked author\]\(outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.html)
+*Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually.*
 
 ### Finding 2: New authors account for a smaller share of authors
 
