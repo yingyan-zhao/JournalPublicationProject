@@ -85,17 +85,20 @@ Several mechanisms could produce this pattern. Larger research teams mechanicall
 [![Share of papers with a top-ranked author\]\(outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.html)
 *Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually.*
 
-### Finding 2: New authors account for a smaller share of authors
+### Finding 2: First-time authors account for a smaller share of authors
 
-This figure looks at all authors appearing in the Top Five in a given year and asks what share are publishing there for the first time. In 1980, new authors accounted for **44.9%** of authors. By 2025, their share had fallen to **35.9%**, a decline of about 9 percentage points. The series moves up and down from year to year, but the broader pattern is that repeat authors make up a larger part of the Top Five author pool than they did in the past.
+Figure 2 examines the composition of authors publishing in the Top Five each year. An author is classified as new in the year of their first observed Top Five publication; all other authors are classified as returning authors. Each author is counted only once within a year, regardless of how many papers they publish.
 
-The declining share does not mean that fewer new authors are publishing in absolute terms. The number of new authors increased from **209 in 1980 to 392 in 2025**, while the total number of authors grew even faster. The figure is therefore best understood as a change in composition: the Top Five expanded, but a smaller proportion of participating authors were first-time entrants.
+In 1980, first-time authors represented 44.9% of all authors publishing in the Top Five. By 2025, their share had fallen to 35.9%, a decline of approximately 9 percentage points. Although the series fluctuates from year to year, its broader direction is downward. Returning authors therefore account for a substantially larger share of the Top Five author pool than they did in the past. 
 
-Several developments could contribute to this pattern, including larger author teams, longer publishing careers, and more repeat publication by experienced scholars.
+This decline does not mean that fewer first-time authors are publishing in absolute terms. Given that the number of coauthors increases by a large extent in recent years, it is not surprising that the number of first-time authors increased from 209 in 1980 to 392 in 2025. The total number of participating authors, however, grew even faster. The result is therefore best understood as a change in composition: the Top Five expanded and included more first-time authors, but the number of returning authors expanded more rapidly.
 
-[![Annual share of authors who are new](outputs/figures/overall/Graph2_1_NewAuthorCountShare_1980_2025.png)](outputs/figures/overall/Graph2_1_NewAuthorShare_1980_2025.html)
+The decline in the new-author share complements Figure 1: both indicate that authors with previous Top Five experience have become more prevalent in the published author pool.
 
-*Figure 2. Percentage of authors in each year who are publishing in the Top Five for the first time observed in this dataset. The observation window begins in 1950.*
+These findings do not establish that opportunities for first-time authors have declined. A “new author” is new only to the Top Five and may already have substantial experience publishing elsewhere. Moreover, the data contain published papers rather than submissions and rejections. The conclusion is that growth in repeat participation has outpaced growth in first-time participation.
+
+[![Annual share of authors who are new\]\(outputs/figures/overall/Graph2_1_NewAuthorCountShare_1980_2025.png)](outputs/figures/overall/Graph2_1_NewAuthorShare_1980_2025.html)
+*Figure 2. Share of distinct authors in each year whose first observed Top Five publication occurs in that year. Authors are counted once within each year, and the observation window begins in 1950.*
 
 ### Finding 3: New authors increasingly publish with experienced coauthors
 
