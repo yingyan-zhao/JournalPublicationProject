@@ -104,18 +104,26 @@ These findings do not establish that opportunities for first-time authors have d
   <figcaption>Figure 2. Share of distinct authors in each year whose first observed Top Five publication occurs in that year. Authors are counted once within each year, and the observation window begins in 1950.</figcaption>
 </figure>
 
-### Finding 3: New authors increasingly publish with experienced coauthors
+### Finding 3: First-time authors increasingly publish with experienced coauthors
 
-This figure separates new authors into three groups according to how they first appear in the Top Five: with at least one coauthor who has published there before, only with other newcomers, or alone. In 1980, **27.3%** of new authors published with an experienced coauthor. By 2025, that share had reached **76.8%**, rising from a little more than one in four new authors to more than three in four.
+Figure 3 examines how new authors first appear in the Top Five. It separates them into three mutually exclusive groups: those publishing with at least one coauthor who has previously published in the Top Five, those publishing only with other first-time authors, and those publishing alone.
 
-The other two paths became less common. The share entering through solo-authored work fell from **48.8% to 6.9%**, while the share publishing only with other new authors declined from **23.9% to 16.3%**. The typical path into the Top Five has therefore shifted away from entering alone and toward entering as part of a team that already includes Top Five experience.
+In 1980, 27.3% of new authors published with an experienced coauthor during their first observed year in the Top Five. By 2025, that share had reached 76.8%, an increase of almost 50 percentage points. The proportion therefore rose from slightly more than one in four new authors to more than three in four.
 
-Experienced coauthors may contribute knowledge, feedback, complementary skills, or familiarity with producing research for leading journals. Coauthorship with established ones undoubtedly provides a large advantage, especially for junior researchers. This advantage becomes more and more dominant in recent years, while researches from less established authors without connection to established coauthors become harder and harder to break into the elite publication.
+The other two pathways became less common. The share entering through solo-authored work fell from 48.8% to 6.9%, while the share publishing only with other newcomers declined from 23.9% to 16.3%. The most common route into the Top Five has therefore shifted from publishing alone to publishing as part of a team that already contains Top Five experience.
+
+It is plausible that experienced coauthors strengthen a research project. They may contribute accumulated knowledge, complementary expertise, feedback, access to resources, or familiarity with developing research for leading journals. What is striking, however, is the magnitude of the increase in first-time authors publishing with experienced coauthors.
+
+Several mechanisms may help explain the change. The sharp decline in solo entry is consistent with the broader growth of coauthorship, larger research teams, and greater specialization within economics. However, the decline in teams composed exclusively of first-time authors is also notable: the growth of collaboration has not translated into more entry through newcomer-only teams. Instead, entry has increasingly occurred through teams containing at least one author with prior Top Five experience.[^2]
+
+A first-time Top Five author is also not necessarily a junior researcher and may have substantial publication experience elsewhere. Because the data contain only published papers, the analysis cannot establish that experienced coauthors cause publication success or that entering without one has become more difficult. The narrower conclusion is that first appearances in the Top Five have become much more closely associated with coauthorship involving prior Top Five experience.
 
 <figure>
   <img src="outputs/figures/overall/Graph3_NewAuthorCoauthorType_1980_2025.png" width="800">
-  <figcaption>Figure 3. Coauthor composition during each new author's first observed year in the Top Five. The categories are mutually exclusive: at least one experienced coauthor, only new coauthors, or solo-authored.</figcaption>
+  <figcaption>Figure 3. Coauthor composition during each new author’s first observed year in the Top Five. The mutually exclusive categories are publication with at least one experienced coauthor, publication only with other new authors, and solo-authored publication.</figcaption>
 </figure>
+
+[^2]: This comparison remains sensitive to team size. As the number of coauthors increases, the probability that at least one team member has prior Top Five experience also rises mechanically. Distinguishing this mechanical effect from a deeper change in the role of experience would require comparing teams of similar sizes or estimating how much of the trend can be explained by changes in coauthorship alone.
 
 ### Finding 4: Observed publication gaps are shorter for newer cohorts
 
