@@ -1,3 +1,8 @@
+# Project at a Glance
+This project demonstrates how I turn an ambiguous research question into an end-to-end data product. Using Python, I integrated OpenAlex, Crossref, RePEc, AEA, and NBER data to construct a reproducible dataset of 23,486 papers, 15,608 disambiguated authors, and 42,468 paper-author observations covering 1950–2026. The pipeline includes API collection, web scraping, data cleaning, DOI and title linkage, fuzzy author matching, and quality validation.
+
+To classify papers with missing JEL fields, I developed and compared multi-label models using TF-IDF and logistic regression, SPECTER2, SciBERT, and a weighted ensemble. I translated the resulting data into static and interactive analyses of publication concentration, entry, coauthorship, and repeat publication. The project highlights transferable skills in data engineering, applied econometrics, machine learning, statistical analysis, visualization, and communicating insights to nontechnical audiences.
+
 # Has It Become Harder to Break Into Economics' Leading Journals? -- Changing Pathways into Economics’ Top Five Journals
 
 ## Overview
