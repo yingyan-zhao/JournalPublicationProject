@@ -82,7 +82,10 @@ It is not surprising that experienced and highly productive authors publish more
 
 Several mechanisms could produce this pattern. Larger research teams mechanically increase the likelihood that a paper includes at least one highly ranked author. Greater specialization may encourage collaboration among researchers with complementary skills, while experienced scholars may increasingly coauthor with newer researchers. Prior publication success may also bring accumulated experience, access to productive collaborators, greater visibility, and reputational advantages that support continued Top Five publication. These interpretations should be treated cautiously: the analysis is purely descriptive, and publication records alone cannot distinguish among these possible explanations.
 
-[![Share of papers with a top-ranked author\]\(outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.html)
+<figure>
+  <img src="outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png" width="500">
+  <figcaption>Figure 1: Architecture overview of the application.</figcaption>
+</figure>
 *Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually.*
 
 ### Finding 2: First-time authors account for a smaller share of authors
