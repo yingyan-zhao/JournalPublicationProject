@@ -1,4 +1,4 @@
-# Has It Become Harder to Break Into Economics' Leading Journals Without an Established Publication Record?
+# Who Publishes in Economics’ Top Five? Experience, Entry, and Coauthorship over Time
 
 ## Overview
 
