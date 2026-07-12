@@ -73,10 +73,15 @@ How have entry, persistence, and the concentration of authorship in economics' T
 ## Preliminary Main Findings
 
 ### Finding 1: Top-ranked authors appear on a growing share of papers
+
 Figure 1 asks how frequently a Top Five paper includes at least one author with a strong recent publication record. Author rankings are recalculated each year using publication counts during the preceding 20 years. The share of papers with at least one top-10% author increased from 27.8% in 1980 to 46.4% in 2025. The corresponding share rose from 18.4% to 29.7% for the top 5% and from 3.4% to 12.9% for the top 1%.
+
 By 2025, nearly half of Top Five papers therefore included an author ranked in the preceding 20-year top 10%. Because the increase appears at all three thresholds, the change is not confined to a small group at the very top of the publication distribution. Authors with strong recent Top Five records have become more prevalent across published papers.
-This pattern is consistent with greater persistence among productive researchers, but it can have several explanations. Experienced authors may have accumulated knowledge, developed more effective research processes, or become involved in several projects simultaneously. Increasing coauthorship and larger research teams also raise the probability that a paper includes at least one highly ranked author. Collaboration between experienced and newer researchers may further contribute to the trend.
-The figure measures the presence of top-ranked authors on papers, not their share of all authorship positions or their individual contribution to each paper. It also does not identify why concentration increased. In particular, it provides no direct evidence that editors favor established authors or that experienced authors have displaced newcomers. The more limited conclusion is that prior Top Five publication success has become more closely associated with continued presence in these journals.
+
+It is not surprising that experienced and highly productive authors publish more frequently. They may have accumulated knowledge, developed more effective research processes, established productive collaborations, or managed several projects simultaneously. What is more striking is how substantially their presence on Top Five papers has increased over time.
+
+Several mechanisms could produce this pattern. Larger research teams mechanically increase the likelihood that a paper includes at least one highly ranked author. Greater specialization may also encourage collaboration between researchers with complementary skills, while experienced scholars may increasingly coauthor with newer researchers. The results are therefore consistent with experience, reputation and prior publication success becoming more closely associated with continued Top Five publication.
+
 [![Share of papers with a top-ranked author\]\(outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.png)](outputs/figures/overall/Graph1_TopAuthorPaperShares_After1980.html)
 *Figure 1. Share of Top Five papers with at least one author ranked in the top 1%, 5%, or 10% of publication counts during the preceding 20 years. Rankings are recalculated annually.*
 
