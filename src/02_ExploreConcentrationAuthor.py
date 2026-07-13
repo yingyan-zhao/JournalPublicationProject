@@ -1911,27 +1911,35 @@ def plot_top_author_shares(
     import matplotlib.pyplot as plt
     from matplotlib.ticker import PercentFormatter
 
-    plot_data = data.loc[data["publication_year"].ge(from_year)].copy()
+    to_year = min(2025, int(data["publication_year"].max()))
+    plot_data = data.loc[
+        data["publication_year"].between(
+            from_year,
+            to_year,
+            inclusive="both",
+        )
+    ].copy()
     if plot_data.empty:
         return
-    figure, axis = plt.subplots(figsize=(11, 6.5))
+    figure, axis = plt.subplots(figsize=(12, 7.4), facecolor="#FCFCFA")
+    axis.set_facecolor("#FCFCFA")
     markers = {1: "o", 5: "s", 10: "^"}
     line_styles = {
         1: {
-            "color": "#A8AFB7",
-            "linewidth": 1.8,
-            "alpha": 0.72,
+            "color": "#7E8994",
+            "linewidth": 2.0,
+            "alpha": 0.74,
             "zorder": 2,
         },
         5: {
-            "color": "#E67E22",
-            "linewidth": 2.0,
-            "alpha": 0.78,
+            "color": "#E17824",
+            "linewidth": 2.5,
+            "alpha": 0.90,
             "zorder": 2,
         },
         GRAPH1_HIGHLIGHT_PERCENTAGE: {
             "color": "#087E73",
-            "linewidth": 3.4,
+            "linewidth": 4.0,
             "alpha": 1.0,
             "zorder": 3,
         },
@@ -1939,75 +1947,132 @@ def plot_top_author_shares(
     for percentage in TOP_AUTHOR_PERCENTAGES:
         series = plot_data.loc[
             plot_data["top_author_percentage"].eq(percentage)
-        ]
+        ].sort_values("publication_year")
+        style = line_styles[percentage]
         axis.plot(
             series["publication_year"],
             series["share_of_papers_with_top_author"],
+            solid_capstyle="round",
+            solid_joinstyle="round",
+            **style,
+        )
+        start = series.iloc[0]
+        end = series.iloc[-1]
+        axis.scatter(
+            [start["publication_year"]],
+            [start["share_of_papers_with_top_author"]],
             marker=markers[percentage],
-            markevery=5,
-            markersize=5,
-            label=f"Top {percentage}% of authors",
-            **line_styles[percentage],
+            s=42,
+            color=style["color"],
+            alpha=style["alpha"],
+            edgecolor="#FCFCFA",
+            linewidth=1.1,
+            zorder=5,
+        )
+        axis.scatter(
+            [end["publication_year"]],
+            [end["share_of_papers_with_top_author"]],
+            marker=markers[percentage],
+            s=82 if percentage == GRAPH1_HIGHLIGHT_PERCENTAGE else 64,
+            color=style["color"],
+            edgecolor="#FCFCFA",
+            linewidth=1.2,
+            zorder=5,
+        )
+        axis.text(
+            to_year + 1.0,
+            float(end["share_of_papers_with_top_author"]),
+            (
+                f"Top {percentage}%   "
+                f"{float(end['share_of_papers_with_top_author']):.1%}"
+            ),
+            color=style["color"],
+            fontsize=13.5,
+            fontweight="bold" if percentage == GRAPH1_HIGHLIGHT_PERCENTAGE else "normal",
+            ha="left",
+            va="center",
+            clip_on=False,
         )
     axis.set_title(
-        "A growing share of papers include top-ranked authors",
+        "Top-ranked authors appear on a growing share of Top Five papers",
         loc="left",
-        pad=38,
-        fontsize=17,
-        fontweight="semibold",
+        pad=40,
+        fontsize=20,
+        fontweight="bold",
     )
     axis.text(
         0,
         1.015,
-        top_author_ranking_subtitle(analysis_label),
+        (
+            "Share of papers with at least one author in each rank group, "
+            "based on Top-Five publication counts in the preceding 20 years"
+        ),
         transform=axis.transAxes,
-        color="#69727D",
-        fontsize=11,
+        color="#66717D",
+        fontsize=12,
         ha="left",
         va="bottom",
     )
     axis.set_xlabel("Publication year")
-    axis.set_ylabel("Share of papers with at least one top-ranked author")
+    axis.set_ylabel("Share of Top Five papers")
     axis.yaxis.set_major_formatter(PercentFormatter(1.0))
-    axis.set_xlim(left=from_year)
-    axis.set_ylim(bottom=0)
-    axis.grid(axis="y", color="#D8DDE3", linewidth=0.8, alpha=0.8)
+    axis.set_xlim(from_year, to_year + 3.3)
+    axis.set_xticks([1980, 1990, 2000, 2010, 2020, 2025])
+    axis.set_ylim(0, 0.56)
+    axis.set_yticks([0, 0.1, 0.2, 0.3, 0.4, 0.5])
+    axis.grid(axis="y", color="#D5DBE1", linewidth=0.9, alpha=0.78)
     axis.grid(axis="x", visible=False)
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
-    axis.spines["left"].set_color("#B8C0C8")
-    axis.spines["bottom"].set_color("#B8C0C8")
-    axis.tick_params(colors="#4E5965")
-    axis.legend(frameon=False, loc="upper left")
+    axis.spines["left"].set_color("#B3BDC6")
+    axis.spines["bottom"].set_color("#B3BDC6")
+    axis.tick_params(colors="#4D5965", labelsize=10.5)
+    axis.xaxis.label.set_size(11.5)
+    axis.yaxis.label.set_size(11.5)
     if analysis_label == "All fields":
         top_ten = plot_data.loc[
             plot_data["top_author_percentage"].eq(10)
-            & plot_data["publication_year"].le(2025)
         ].sort_values("publication_year")
         if not top_ten.empty:
-            target = top_ten.iloc[-1]
-            axis.annotate(
-                (
-                    "The share of papers with a top-10% author\n"
-                    "rose from 28% in 1980 to 46% in 2025."
-                ),
-                xy=(
-                    int(target["publication_year"]),
-                    float(target["share_of_papers_with_top_author"]),
-                ),
-                xytext=(0.43, 0.96),
-                textcoords="axes fraction",
-                color="#4E5965",
-                fontsize=10,
-                ha="left",
-                va="top",
-                arrowprops={
-                    "arrowstyle": "-",
-                    "color": "#87919B",
-                    "linewidth": 1.0,
-                },
+            start = top_ten.iloc[0]
+            end = top_ten.iloc[-1]
+            change = (
+                float(end["share_of_papers_with_top_author"])
+                - float(start["share_of_papers_with_top_author"])
             )
-    save_figure(figure, output_path)
+            axis.text(
+                2001.5,
+                0.525,
+                (
+                    f"Top 10%: {float(start['share_of_papers_with_top_author']):.0%} "
+                    f"\N{RIGHTWARDS ARROW} "
+                    f"{float(end['share_of_papers_with_top_author']):.0%}  "
+                    f"(+{change * 100:.1f} percentage points)"
+                ),
+                color="#087E73",
+                fontsize=11.5,
+                fontweight="bold",
+                ha="left",
+                va="center",
+            )
+    figure.text(
+        0.105,
+        0.025,
+        (
+            "Note: Authors are ranked each year by Top Five publication counts "
+            "during the preceding 20 years; ties at each cutoff are included.\n"
+            "The incomplete 2026 publication year is excluded."
+        ),
+        color="#697580",
+        fontsize=9.2,
+        ha="left",
+        va="bottom",
+    )
+    save_figure(
+        figure,
+        output_path,
+        tight_layout_rect=(0, 0.09, 1, 1),
+    )
 
 
 def plot_share_only(
@@ -2407,7 +2472,7 @@ def write_interactive_new_author_coauthor_types(
     <p class="subtitle">__SUBTITLE__</p>
     <div class="legend" aria-label="Choose the emphasized coauthor composition">
       <button type="button" data-series="experienced" aria-pressed="true"><span class="swatch" style="--swatch: var(--experienced)"></span>At least one experienced coauthor</button>
-      <button type="button" data-series="new_only" aria-pressed="false"><span class="swatch" style="--swatch: var(--new-only)"></span>New coauthors only</button>
+      <button type="button" data-series="new_only" aria-pressed="false"><span class="swatch" style="--swatch: var(--new-only)"></span>With other first-time authors</button>
       <button type="button" data-series="solo" aria-pressed="false"><span class="swatch" style="--swatch: var(--solo)"></span>Solo-authored</button>
     </div>
     <svg class="chart-svg" viewBox="0 0 900 540" role="img" aria-labelledby="chart-title chart-description">
@@ -2423,7 +2488,7 @@ def write_interactive_new_author_coauthor_types(
       const showAnnotation = __SHOW_ANNOTATION__;
       const labels = {
         experienced: "At least one experienced coauthor",
-        new_only: "New coauthors only",
+        new_only: "With other first-time authors",
         solo: "Solo-authored"
       };
       const root = document.getElementById("new-author-coauthor-chart");
@@ -2479,7 +2544,7 @@ def write_interactive_new_author_coauthor_types(
         add("text", { class: "annotation", x: x(1994), y: y(0.96) }, "First publication with experienced coauthors rose from about 28% to 77%,");
         add("text", { class: "annotation", x: x(1994), y: y(0.915) }, "+49 percentage points since 1980");
         add("line", { class: "annotation-line", x1: x(2018), y1: y(0.29), x2: x(newOnlyTarget[0]), y2: y(newOnlyTarget[1]) });
-        add("text", { class: "annotation", x: x(2005), y: y(0.35) }, "New coauthors only: 24% \N{RIGHTWARDS ARROW} 16%");
+        add("text", { class: "annotation", x: x(2005), y: y(0.35) }, "With other first-time authors: 24% \N{RIGHTWARDS ARROW} 16%");
         add("text", { class: "annotation", x: x(2005), y: y(0.305) }, "(-8 percentage points since 1980)");
         add("line", { class: "annotation-line", x1: x(2016), y1: y(0.12), x2: x(soloTarget[0]), y2: y(soloTarget[1]) });
         add("text", { class: "annotation", x: x(1998), y: y(0.15) }, "Solo-authored: 49% \N{RIGHTWARDS ARROW} 7%");
@@ -2586,27 +2651,29 @@ def plot_new_author_coauthor_types(
     ]
     if plot_data.empty:
         return
-    figure, axis = plt.subplots(figsize=(11, 6.5))
+    plot_data = plot_data.sort_values("first_top5_publication_year")
+    figure, axis = plt.subplots(figsize=(12, 7.4), facecolor="#FCFCFA")
+    axis.set_facecolor("#FCFCFA")
     series = [
         (
             "share_with_experienced_coauthor",
-            "At least one experienced coauthor",
+            "With experienced coauthor",
             "o",
             {
                 "color": "#087E73",
-                "linewidth": 3.4,
+                "linewidth": 4.0,
                 "alpha": 1.0,
                 "zorder": 3,
             },
         ),
         (
             "share_only_with_other_new_coauthors",
-            "New coauthors only",
+            "With other first-time authors",
             "s",
             {
-                "color": "#E67E22",
-                "linewidth": 2.0,
-                "alpha": 0.78,
+                "color": "#E17824",
+                "linewidth": 2.5,
+                "alpha": 0.90,
                 "zorder": 2,
             },
         ),
@@ -2615,9 +2682,9 @@ def plot_new_author_coauthor_types(
             "Solo-authored",
             "^",
             {
-                "color": "#A8AFB7",
-                "linewidth": 1.8,
-                "alpha": 0.72,
+                "color": "#7E8994",
+                "linewidth": 2.0,
+                "alpha": 0.74,
                 "zorder": 2,
             },
         ),
@@ -2626,136 +2693,147 @@ def plot_new_author_coauthor_types(
         axis.plot(
             plot_data["first_top5_publication_year"],
             plot_data[column],
-            marker=marker,
-            markevery=5,
-            markersize=5,
-            label=label,
+            solid_capstyle="round",
+            solid_joinstyle="round",
             **line_style,
+        )
+        start = plot_data.iloc[0]
+        end = plot_data.iloc[-1]
+        axis.scatter(
+            [start["first_top5_publication_year"]],
+            [start[column]],
+            marker=marker,
+            s=42,
+            color=line_style["color"],
+            alpha=line_style["alpha"],
+            edgecolor="#FCFCFA",
+            linewidth=1.1,
+            zorder=5,
+        )
+        axis.scatter(
+            [end["first_top5_publication_year"]],
+            [end[column]],
+            marker=marker,
+            s=82 if column == "share_with_experienced_coauthor" else 64,
+            color=line_style["color"],
+            edgecolor="#FCFCFA",
+            linewidth=1.2,
+            zorder=5,
+        )
+        if column == "share_with_experienced_coauthor":
+            label_x = to_year - 0.4
+            label_y = float(end[column]) - 0.045
+            label_vertical_alignment = "top"
+        elif column == "share_only_with_other_new_coauthors":
+            label_x = to_year - 0.7
+            label_y = float(end[column]) + 0.035
+            label_vertical_alignment = "bottom"
+        else:
+            label_x = to_year - 0.4
+            label_y = float(end[column]) + 0.022
+            label_vertical_alignment = "bottom"
+        axis.text(
+            label_x,
+            label_y,
+            f"{label}   {float(end[column]):.1%}",
+            color=line_style["color"],
+            fontsize=11.5,
+            fontweight=(
+                "bold"
+                if column == "share_with_experienced_coauthor"
+                else "normal"
+            ),
+            ha="right",
+            va=label_vertical_alignment,
+            clip_on=False,
+            bbox={
+                "facecolor": "#FCFCFA",
+                "edgecolor": "none",
+                "pad": 1.5,
+                "alpha": 0.94,
+            },
         )
     scope_label = publication_scope_label(analysis_label)
     axis.set_title(
-        "New authors increasingly publish with experienced coauthors",
+        "First-time authors increasingly publish with experienced coauthors",
         loc="left",
-        pad=38,
-        fontsize=15,
-        fontweight="semibold",
+        pad=40,
+        fontsize=20,
+        fontweight="bold",
     )
     subtitle = (
-        "Share of new authors by coauthor composition during their first "
-        f"observed year in {scope_label}, 1980\N{EN DASH}2025"
+        "Coauthor composition during each author's first observed year in "
+        f"{scope_label}, {from_year}\N{EN DASH}{to_year}"
     )
     axis.text(
         0,
         1.015,
         subtitle,
         transform=axis.transAxes,
-        color="#69727D",
-        fontsize=11,
+        color="#66717D",
+        fontsize=12,
         ha="left",
         va="bottom",
     )
     axis.set_xlabel(f"Year of first publication in {scope_label}")
-    axis.set_ylabel("Share of new authors")
+    axis.set_ylabel("Share of first-time authors")
     axis.yaxis.set_major_formatter(PercentFormatter(1.0))
-    axis.set_xlim(from_year, to_year)
-    axis.set_ylim(0, 1)
-    axis.grid(axis="y", color="#D8DDE3", linewidth=0.8, alpha=0.8)
+    axis.set_xlim(from_year, to_year + 0.7)
+    axis.set_xticks([1980, 1990, 2000, 2010, 2020, 2025])
+    axis.set_ylim(0, 0.90)
+    axis.set_yticks([0, 0.2, 0.4, 0.6, 0.8])
+    axis.grid(axis="y", color="#D5DBE1", linewidth=0.9, alpha=0.78)
     axis.grid(axis="x", visible=False)
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
-    axis.spines["left"].set_color("#B8C0C8")
-    axis.spines["bottom"].set_color("#B8C0C8")
-    axis.tick_params(colors="#4E5965")
-    axis.legend(frameon=False, loc="upper left")
+    axis.spines["left"].set_color("#B3BDC6")
+    axis.spines["bottom"].set_color("#B3BDC6")
+    axis.tick_params(colors="#4D5965", labelsize=10.5)
+    axis.xaxis.label.set_size(11.5)
+    axis.yaxis.label.set_size(11.5)
 
     if analysis_label == "All fields":
-        experienced = plot_data.loc[
-            plot_data["first_top5_publication_year"].le(2025)
-        ].sort_values("first_top5_publication_year")
-        if not experienced.empty:
-            target = experienced.iloc[-1]
-            axis.annotate(
-                (
-                    "First publication with experienced coauthors rose from about 28% "
-                    "to 77%,\n+49 percentage points since 1980"
-                ),
-                xy=(
-                    int(target["first_top5_publication_year"]),
-                    float(target["share_with_experienced_coauthor"]),
-                ),
-                xytext=(0.45, 0.94),
-                textcoords="axes fraction",
-                color="#4E5965",
-                fontsize=10,
-                ha="left",
-                va="top",
-                arrowprops={
-                    "arrowstyle": "-",
-                    "color": "#87919B",
-                    "linewidth": 1.0,
-                },
-            )
-            axis.annotate(
-                (
-                    "New coauthors only: 24% \N{RIGHTWARDS ARROW} 16%\n"
-                    "(-8 percentage points since 1980)"
-                ),
-                xy=(
-                    int(target["first_top5_publication_year"]),
-                    float(target["share_only_with_other_new_coauthors"]),
-                ),
-                xytext=(0.56, 0.35),
-                textcoords="axes fraction",
-                color="#4E5965",
-                fontsize=9,
-                ha="left",
-                va="top",
-                arrowprops={
-                    "arrowstyle": "-",
-                    "color": "#C98A4A",
-                    "linewidth": 1.0,
-                },
-            )
-            axis.annotate(
-                (
-                    "Solo-authored: 49% \N{RIGHTWARDS ARROW} 7%\n"
-                    "(-42 percentage points since 1980)"
-                ),
-                xy=(
-                    int(target["first_top5_publication_year"]),
-                    float(target["share_solo"]),
-                ),
-                xytext=(0.47, 0.15),
-                textcoords="axes fraction",
-                color="#4E5965",
-                fontsize=9,
-                ha="left",
-                va="top",
-                arrowprops={
-                    "arrowstyle": "-",
-                    "color": "#9EA6AE",
-                    "linewidth": 1.0,
-                },
-            )
+        start = plot_data.iloc[0]
+        end = plot_data.iloc[-1]
+        change = (
+            float(end["share_with_experienced_coauthor"])
+            - float(start["share_with_experienced_coauthor"])
+        )
+        axis.text(
+            1997.5,
+            0.845,
+            (
+                "With experienced coauthor: "
+                f"{float(start['share_with_experienced_coauthor']):.0%} "
+                f"\N{RIGHTWARDS ARROW} "
+                f"{float(end['share_with_experienced_coauthor']):.0%}  "
+                f"(+{change * 100:.1f} percentage points)"
+            ),
+            color="#087E73",
+            fontsize=11.5,
+            fontweight="bold",
+            ha="left",
+            va="center",
+        )
 
     figure.text(
-        0.115,
-        0.015,
+        0.105,
+        0.025,
         (
-            f"Note: New authors are those publishing in {scope_label} for the first "
-            f"observed time in that year.\n\"Experienced coauthor\" means the "
-            f"coauthor published in {scope_label} previously.\nCategories are "
-            "mutually exclusive and sum to 100%."
+            f"Note: A first-time author is observed publishing in {scope_label} for "
+            "the first time in that year; an experienced coauthor has an earlier "
+            f"publication in {scope_label}.\nCategories are mutually exclusive and "
+            "sum to 100%."
         ),
-        color="#69727D",
-        fontsize=9,
+        color="#697580",
+        fontsize=9.2,
         ha="left",
         va="bottom",
     )
     save_figure(
         figure,
         output_path,
-        tight_layout_rect=(0, 0.17, 1, 1),
+        tight_layout_rect=(0, 0.10, 1, 1),
     )
 
 

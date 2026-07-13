@@ -195,7 +195,7 @@
     <p class="subtitle">Share of new authors by coauthor composition during their first observed year in the Top Five, 1980–2025</p>
     <div class="legend" aria-label="Choose the emphasized coauthor composition">
       <button type="button" data-series="experienced" aria-pressed="true"><span class="swatch" style="--swatch: var(--experienced)"></span>At least one experienced coauthor</button>
-      <button type="button" data-series="new_only" aria-pressed="false"><span class="swatch" style="--swatch: var(--new-only)"></span>New coauthors only</button>
+      <button type="button" data-series="new_only" aria-pressed="false"><span class="swatch" style="--swatch: var(--new-only)"></span>With other first-time authors</button>
       <button type="button" data-series="solo" aria-pressed="false"><span class="swatch" style="--swatch: var(--solo)"></span>Solo-authored</button>
     </div>
     <svg class="chart-svg" viewBox="0 0 900 540" role="img" aria-labelledby="chart-title chart-description">
@@ -211,7 +211,7 @@
       const showAnnotation = true;
       const labels = {
         experienced: "At least one experienced coauthor",
-        new_only: "New coauthors only",
+        new_only: "With other first-time authors",
         solo: "Solo-authored"
       };
       const root = document.getElementById("new-author-coauthor-chart");
@@ -267,7 +267,7 @@
         add("text", { class: "annotation", x: x(1994), y: y(0.96) }, "First publication with experienced coauthors rose from about 28% to 77%,");
         add("text", { class: "annotation", x: x(1994), y: y(0.915) }, "+49 percentage points since 1980");
         add("line", { class: "annotation-line", x1: x(2018), y1: y(0.29), x2: x(newOnlyTarget[0]), y2: y(newOnlyTarget[1]) });
-        add("text", { class: "annotation", x: x(2005), y: y(0.35) }, "New coauthors only: 24% → 16%");
+        add("text", { class: "annotation", x: x(2005), y: y(0.35) }, "With other first-time authors: 24% → 16%");
         add("text", { class: "annotation", x: x(2005), y: y(0.305) }, "(-8 percentage points since 1980)");
         add("line", { class: "annotation-line", x1: x(2016), y1: y(0.12), x2: x(soloTarget[0]), y2: y(soloTarget[1]) });
         add("text", { class: "annotation", x: x(1998), y: y(0.15) }, "Solo-authored: 49% → 7%");

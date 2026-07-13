@@ -71,7 +71,7 @@ The sample covers 1950-2026. Because 2026 is incomplete, observations from that 
 
 ## Research Question
 
-How have entry, persistence, and the concentration of authorship in economics' Top Five journals changed over time, and has publication without a prior Top Five record become less common?
+How have pathways into economics’ leading journals changed over time?
 
 ## Preliminary Main Findings
 
